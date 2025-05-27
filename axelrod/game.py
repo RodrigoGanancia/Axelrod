@@ -136,4 +136,45 @@ class Game(AsymmetricGame):
         return self.RPST() == other.RPST()
 
 
+class ThreePlayerGame:
+    """
+    A simple 3-player extension of the standard PD payoff.
+    Expects a dictionary mapping (action1,action2,action3) → (score1,score2,score3).
+    """
+    def __init__(self, payoff_map):
+        # payoff_map: Dict[Tuple[Action,Action,Action], Tuple[float,float,float]]
+        self.payoff_map = payoff_map
+
+    def score(self, triple):
+        """
+        triple: (A1, A2, A3), each ∈ {C, D}
+        returns (s1, s2, s3)
+        """
+        try:
+            return self.payoff_map[triple]
+        except KeyError:
+            raise ValueError(f"No payoff defined for {triple}")
+
+    def __repr__(self):
+        return f"ThreePlayerGame({len(self.payoff_map)} entries)"
+
+# -------------------------------------------------------------------
+# A built-in “default” 3-player PD payoff map for quick experiments:
+
+_default_three_payoff_map = {}
+for a1 in (C, D):
+    for a2 in (C, D):
+        for a3 in (C, D):
+            k = sum(1 for a in (a1, a2, a3) if a == C)
+            # cooperators get +1 per cooperator, defectors get +2 if any cooperator else 0
+            scores = tuple(
+                (1 * k) if a == C else (2 if k > 0 else 0)
+                for a in (a1, a2, a3)
+            )
+            _default_three_payoff_map[(a1, a2, a3)] = scores
+
+#: a handy default instance you can import directly
+DefaultThreePlayerGame = ThreePlayerGame(_default_three_payoff_map)
+# -------------------------------------------------------------------
+
 DefaultGame = Game()

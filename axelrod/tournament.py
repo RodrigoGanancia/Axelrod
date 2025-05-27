@@ -15,8 +15,8 @@ from axelrod.action import Action, actions_to_str
 from axelrod.player import Player
 
 from .game import Game
-from .match import Match
-from .match_generator import MatchChunk, MatchGenerator
+from .match import Match, ThreeMatch
+from .match_generator import MatchChunk, MatchGenerator, complete_3hypergraph
 from .result_set import ResultSet
 
 C, D = Action.C, Action.D
@@ -35,6 +35,7 @@ class Tournament(object):
         edges: Optional[List[Tuple]] = None,
         match_attributes: Optional[dict] = None,
         seed: Optional[int] = None,
+        group_size: int = 2
     ) -> None:
         """
         Parameters
@@ -74,12 +75,17 @@ class Tournament(object):
         self.repetitions = repetitions
         self.edges = edges
         self.seed = seed
+        self.group_size = group_size
 
         if turns is None and prob_end is None:
             turns = DEFAULT_TURNS
+            
+        if self.group_size == 3 and edges is None:
+            edges = list(complete_3hypergraph(players))
 
         self.turns = turns
         self.prob_end = prob_end
+        match_class = ThreeMatch if self.group_size==3 else Match
         self.match_generator = MatchGenerator(
             players=players,
             turns=turns,
@@ -91,6 +97,7 @@ class Tournament(object):
             match_attributes=match_attributes,
             seed=self.seed,
         )
+        self.match_class = match_class
         self._logger = logging.getLogger(__name__)
 
         self.use_progress_bar = True
@@ -451,7 +458,7 @@ class Tournament(object):
         player2 = self.players[p2_index].clone()
         chunk.match_params["players"] = (player1, player2)
         chunk.match_params["seed"] = chunk.seed
-        match = Match(**chunk.match_params)
+        match = self.match_class(**chunk.match_params)
         for _ in range(chunk.repetitions):
             match.play()
 

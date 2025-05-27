@@ -1,5 +1,6 @@
 from axelrod.action import Action
 from axelrod.player import Player
+from typing import List
 
 C, D = Action.C, Action.D
 
@@ -26,6 +27,11 @@ class Cooperator(Player):
 
     @staticmethod
     def strategy(opponent: Player) -> Action:
+        """Actual strategy definition that determines player's action."""
+        return C
+
+    @staticmethod
+    def strategy_multi(opponent: List[Player]) -> Action:
         """Actual strategy definition that determines player's action."""
         return C
 

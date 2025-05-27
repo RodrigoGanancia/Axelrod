@@ -433,7 +433,7 @@ class SecondByTranquilizer(Player):
 
 
 class SecondByGrofman(Player):
-    """
+    r"""
     Submitted to Axelrod's second tournament by Bernard Grofman.
 
     This strategy has 3 phases:

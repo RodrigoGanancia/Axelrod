@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Any, Dict, Iterator, Tuple
+from itertools import combinations
 
 from axelrod.random_ import BulkRandomGenerator
 
@@ -148,3 +149,10 @@ def graph_is_connected(edges, players):
             node_indices.add(node)
 
     return player_indices == node_indices
+
+
+def complete_3hypergraph(players):
+    """Yield all unordered triples (i,j,k) with i<j<k"""
+    n = len(players)
+    for i,j,k in combinations(range(n), 3):
+        yield (i,j,k)

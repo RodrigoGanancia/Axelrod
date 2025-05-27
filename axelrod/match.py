@@ -4,7 +4,7 @@ import axelrod.interaction_utils as iu
 from axelrod import DEFAULT_TURNS, Classifiers
 from axelrod.action import Action
 from axelrod.deterministic_cache import DeterministicCache
-from axelrod.game import Game
+from axelrod.game import Game, ThreePlayerGame
 from axelrod.random_ import RandomGenerator
 
 C, D = Action.C, Action.D
@@ -252,6 +252,53 @@ class Match(object):
     def __len__(self):
         return self.turns
 
+
+class ThreeMatch(Match):
+    def __init__(self, players, turns=None, game: ThreePlayerGame=None,
+                 noise=0, match_attributes=None, seed=None):
+        if len(players) != 3:
+            raise ValueError("ThreeMatch requires exactly 3 players.")
+        # We ignore deterministic_cache and prob_end for now:
+        super().__init__(players=players, turns=turns,
+                         game=None, noise=noise,
+                         match_attributes=match_attributes, seed=seed)
+        self.game3 = game or game  # must be a ThreePlayerGame
+
+    def play(self):
+        """Override play to use 3-player simultaneous_play."""
+        self.result = []
+        for p in self.players:
+            p.reset()
+            p.set_match_attributes(length=self.turns, game=self.game3, noise=self.noise)
+        for _ in range(self.turns):
+            # each player picks an action given the *other two* as opponents
+            acts = []
+            for i, player in enumerate(self.players):
+                others = [self.players[j] for j in range(3) if j != i]
+                # you must adapt your 3 strategies to accept `strategy(self, opponents: List[Player])`
+                if hasattr(player, "strategy_multi"):
+                    # call the 3-player API
+                    acts.append(player.strategy_multi(others))
+                else:
+                    # fallback to 2-player API on the first opponent
+                    acts.append(player.strategy(others[0]))
+            # apply noise if wanted
+            # update each history: we pack the two opponents’ last moves as coplays
+            for i, player in enumerate(self.players):
+                coplays = tuple(acts[j] for j in range(3) if j != i)
+                player.update_history(acts[i], coplays)
+            self.result.append(tuple(acts))
+        return self.result
+
+    def final_score(self):
+        """Return total scores for each of the three players."""
+        # accumulate per-turn via ThreePlayerGame
+        totals = [0,0,0]
+        for triple in self.result:
+            scores = self.game3.score(triple)           # (s1,s2,s3)
+            for i,s in enumerate(scores):
+                totals[i] += s
+        return tuple(totals)
 
 def sample_length(prob_end, random_value):
     """
