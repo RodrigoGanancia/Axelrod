@@ -96,6 +96,7 @@ class Tournament(object):
             edges=edges,
             match_attributes=match_attributes,
             seed=self.seed,
+            group_size=self.group_size
         )
         self.match_class = match_class
         self._logger = logging.getLogger(__name__)
@@ -199,16 +200,29 @@ class Tournament(object):
         if self.filename is not None:
             file_obj = open(self.filename, "w")
             writer = csv.writer(file_obj, lineterminator="\n")
-
-            header = [
-                "Interaction index",
-                "Player index",
-                "Opponent index",
-                "Repetition",
-                "Player name",
-                "Opponent name",
-                "Actions",
-            ]
+            if self.group_size == 2:
+                header = [
+                    "Interaction index",
+                    "Player index",
+                    "Opponent index",
+                    "Repetition",
+                    "Player name",
+                    "Opponent name",
+                    "Actions",
+                ]
+            else:
+                header = [
+                    "Interaction index",
+                    "Player index",
+                    "Opponent1 index",
+                    "Opponent2 index",
+                    "Repetition",
+                    "Player name",
+                    "Opponent1 name",
+                    "Opponent2 name",
+                    "History",
+                    "Score",
+                ]
             if build_results:
                 header.extend(
                     [
@@ -249,66 +263,107 @@ class Tournament(object):
     def _write_interactions_to_file(self, results, writer):
         """Write the interactions to csv."""
         for index_pair, interactions in results.items():
-            repetition = 0
-            for interaction, results in interactions:
+            if self.group_size == 2:
+                self._2p_write_interactions_to_file(index_pair, interactions, writer, self.players)
+            else:
+                self._3p_write_interactions_to_file(index_pair, interactions, writer, self.players)
+            
+
+    
+    def _2p_write_interactions_to_file(self, index_pair, interactions, writer, players):
+        repetition = 0
+        for interaction, results in interactions:
+
+            if results is not None:
+                (
+                    scores,
+                    score_diffs,
+                    turns,
+                    score_per_turns,
+                    score_diffs_per_turns,
+                    initial_cooperation,
+                    cooperations,
+                    state_distribution,
+                    state_to_action_distributions,
+                    winner_index,
+                ) = results
+            for index, player_index in enumerate(index_pair):
+                opponent_index = index_pair[index - 1]
+                row = [
+                    self.num_interactions,
+                    player_index,
+                    opponent_index,
+                    repetition,
+                    str(self.players[player_index]),
+                    str(self.players[opponent_index]),
+                ]
+                history = actions_to_str([i[index] for i in interaction])
+                row.append(history)
 
                 if results is not None:
-                    (
-                        scores,
-                        score_diffs,
-                        turns,
-                        score_per_turns,
-                        score_diffs_per_turns,
-                        initial_cooperation,
-                        cooperations,
-                        state_distribution,
-                        state_to_action_distributions,
-                        winner_index,
-                    ) = results
-                for index, player_index in enumerate(index_pair):
-                    opponent_index = index_pair[index - 1]
-                    row = [
-                        self.num_interactions,
-                        player_index,
-                        opponent_index,
-                        repetition,
-                        str(self.players[player_index]),
-                        str(self.players[opponent_index]),
-                    ]
-                    history = actions_to_str([i[index] for i in interaction])
-                    row.append(history)
+                    row.append(scores[index])
+                    row.append(score_diffs[index])
+                    row.append(turns)
+                    row.append(score_per_turns[index])
+                    row.append(score_diffs_per_turns[index])
+                    row.append(int(winner_index is index))
+                    row.append(initial_cooperation[index])
+                    row.append(cooperations[index])
 
-                    if results is not None:
-                        row.append(scores[index])
-                        row.append(score_diffs[index])
-                        row.append(turns)
-                        row.append(score_per_turns[index])
-                        row.append(score_diffs_per_turns[index])
-                        row.append(int(winner_index is index))
-                        row.append(initial_cooperation[index])
-                        row.append(cooperations[index])
-
-                        states = [(C, C), (C, D), (D, C), (D, D)]
-                        if index == 1:
-                            states = [s[::-1] for s in states]
-                        for state in states:
-                            row.append(state_distribution[state])
-                        for state in states:
-                            row.append(
-                                state_to_action_distributions[index][(state, C)]
-                            )
-                            row.append(
-                                state_to_action_distributions[index][(state, D)]
-                            )
-
+                    states = [(C, C), (C, D), (D, C), (D, D)]
+                    if index == 1:
+                        states = [s[::-1] for s in states]
+                    for state in states:
+                        row.append(state_distribution[state])
+                    for state in states:
                         row.append(
-                            int(cooperations[index] >= cooperations[index - 1])
+                            state_to_action_distributions[index][(state, C)]
+                        )
+                        row.append(
+                            state_to_action_distributions[index][(state, D)]
                         )
 
-                    writer.writerow(row)
-                repetition += 1
-                self.num_interactions += 1
+                    row.append(
+                        int(cooperations[index] >= cooperations[index - 1])
+                    )
 
+                writer.writerow(row)
+            repetition += 1
+            self.num_interactions += 1
+
+    
+    def _3p_write_interactions_to_file(self, index_pair, interactions, writer, players):
+        repetition = 0
+        for history, metrics in interactions:
+            if metrics is None:
+                repetition += 1
+                continue
+            final_scores = metrics["final_scores"]
+            for m, player_index in enumerate(index_pair):
+                others = [i for i in index_pair if i != player_index]
+                row = [
+                    self.num_interactions,
+                    player_index,
+                    others[0],
+                    others[1],
+                    repetition,
+                    str(self.players[player_index]),
+                    str(self.players[others[0]]),
+                    str(self.players[others[1]]),
+                    self.custom_3p_history_string(history, m),
+                    final_scores[m],
+                ]
+                writer.writerow(row)
+                self.num_interactions += 1
+            repetition += 1
+    
+    
+    def custom_3p_history_string(self, history, player_index):
+        # history = [(C,D,C),(D,D,D),…]
+        return "|".join("".join(a.name for a in triple) for triple in history)
+    
+    
+    
     def _run_parallel(
         self, processes: int = 2, build_results: bool = True
     ) -> bool:
@@ -453,11 +508,20 @@ class Tournament(object):
                 (0, 1) -> [(C, D), (D, C),...]
         """
         interactions = defaultdict(list)
-        p1_index, p2_index = chunk.index_pair
-        player1 = self.players[p1_index].clone()
-        player2 = self.players[p2_index].clone()
-        chunk.match_params["players"] = (player1, player2)
+        if len(chunk.index_pair) == 2:
+            p1_index, p2_index = chunk.index_pair
+            player1 = self.players[p1_index].clone()
+            player2 = self.players[p2_index].clone()
+            chunk.match_params["players"] = (player1, player2)
+        else:
+            i, j, k = chunk.index_pair
+            players = (self.players[i].clone(),
+                  self.players[j].clone(),
+                  self.players[k].clone())
+            chunk.match_params["players"] = players
+            
         chunk.match_params["seed"] = chunk.seed
+        
         match = self.match_class(**chunk.match_params)
         for _ in range(chunk.repetitions):
             match.play()
@@ -471,6 +535,18 @@ class Tournament(object):
         return interactions
 
     def _calculate_results(self, interactions):
+        if interactions and len(interactions[0]) == 3:
+            # 3p: each `interaction` is a triple of Actions
+            totals = [0,0,0]
+            for triple in interactions:
+                s1, s2, s3 = self.game.score(triple)    # ThreePlayerGame.score
+                totals[0] += s1
+                totals[1] += s2
+                totals[2] += s3
+            # you can also compute per-turn, diffs, etc., if you like
+            return {"final_scores": tuple(totals)}
+        
+        # 2p case
         results = []
 
         scores = iu.compute_final_score(interactions, self.game)

@@ -22,6 +22,7 @@ class MatchGenerator(object):
         self,
         players,
         repetitions,
+        group_size,
         turns=None,
         game=None,
         noise=0,
@@ -67,6 +68,7 @@ class MatchGenerator(object):
         self.random_generator = BulkRandomGenerator(seed)
 
         self.edges = edges
+        self.group_size = group_size
         if edges is not None:
             if not graph_is_connected(edges, players):
                 raise ValueError("The graph edges do not include all players.")
@@ -89,10 +91,18 @@ class MatchGenerator(object):
             ((player1 index, player2 index), match object)
         """
         if self.edges is None:
-            edges = complete_graph(self.players)
+            if self.group_size == 2:
+                edges = complete_graph(self.players)
+            else:
+                edges = complete_3hypergraph(self.players)
         else:
             edges = self.edges
 
+        # prints edges info
+        print(f"Edges size: {len(edges)}")
+        for edge in edges:
+            print(f"Edge: {edge}")
+        
         for index_pair in edges:
             match_params = self.build_single_match_params()
             r = next(self.random_generator)

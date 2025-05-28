@@ -254,14 +254,14 @@ class Match(object):
 
 
 class ThreeMatch(Match):
-    def __init__(self, players, turns=None, game: ThreePlayerGame=None,
+    def __init__(self, players, prob_end, turns=None, game: ThreePlayerGame=None,
                  noise=0, match_attributes=None, seed=None):
         if len(players) != 3:
             raise ValueError("ThreeMatch requires exactly 3 players.")
         # We ignore deterministic_cache and prob_end for now:
         super().__init__(players=players, turns=turns,
                          game=None, noise=noise,
-                         match_attributes=match_attributes, seed=seed)
+                         match_attributes=match_attributes, seed=seed, prob_end=prob_end)
         self.game3 = game or game  # must be a ThreePlayerGame
 
     def play(self):

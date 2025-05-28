@@ -580,9 +580,32 @@ class ResultSet:
         """
         Returns a tuple of dask tasks
         """
+        if "Opponent1 index" in df.columns:
+            # 3p
+            groups = ["Repetition", "Player index", "Opponent1 index", "Opponent2 index"]
+            columns = ["Score"]
+            mean_per_reps_player_opponent_task = df.groupby(groups)[columns].mean()
+            groups = ["Repetition", "Player index", "Opponent1 index", "Opponent2 index"]
+            columns = ["Turns", "Score per turn", "Score difference per turn"]
+            mean_per_reps_player_opponent_task = df.groupby(groups)[columns].mean()
+            # TODO -> IMPLEMENT REST
+            return (
+                mean_per_reps_player_opponent_task,
+                None,  # sum_per_player_opponent_task not implemented for 3p
+                None,  # sum_per_player_repetition_task not implemented for 3p
+                None,  # normalised_scores_task not implemented for 3p
+                None,  # initial_cooperation_count_task not implemented for 3p
+                None,  # interactions_count_task not implemented for 3p
+            )
+            
+        #else:
+        #
         groups = ["Repetition", "Player index", "Opponent index"]
         columns = ["Turns", "Score per turn", "Score difference per turn"]
+        
         mean_per_reps_player_opponent_task = df.groupby(groups)[columns].mean()
+        groups = ["Repetition", "Player index", "Opponent index"]
+        columns = ["Turns", "Score per turn", "Score difference per turn"]
 
         groups = ["Player index", "Opponent index"]
         columns = [
