@@ -1,9 +1,9 @@
 import axelrod as axl
-from axelrod.strategies import Cooperator, Defector, TitForTat
+from axelrod.strategies import Cooperator, Defector, TitForTat, Random
 from axelrod.game import DefaultThreePlayerGame
 
 # players
-players = (Cooperator(), Defector(), Cooperator())
+players = (Cooperator(), TitForTat(), Defector())
 
 # build and run 3p tournament
 tournament = axl.Tournament(
