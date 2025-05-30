@@ -259,6 +259,14 @@ class AntiTitForTat(Player):
     def strategy(opponent: Player) -> Action:
         """Actual strategy definition that determines player's action."""
         return D if opponent.history[-1:] == [C] else C
+    
+    def multi_strategy(self, opponents: List[Player]) -> Action:
+        """If any of the opponents cooperates, bully them."""
+        if not self.history:
+            return C
+        if opponents[0].history[-1:] == C or opponents[1].history[-1:] == C:
+            return D
+        return C
 
 
 class HardTitForTat(Player):
@@ -962,3 +970,138 @@ class BurnBothEnds(Player):
             return self._random.random_choice(0.9)
         # Else TFT. Opponent played D, so play D in return.
         return D
+    
+
+class SoftTifForTat(Player):
+    """
+    In the previous round, if both players defected,
+    defect on next round
+    """
+
+    # These are various properties for the strategy
+    name = "Soft Tit For Tat"
+    classifier = {
+        "memory_depth": 1,  # Four-Vector = (1.,0.,1.,0.)
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        """Actual strategy definition that determines player's action."""
+        if not self.history:
+            return C
+        if opponents[0].history[-1] == D and opponents[1].history[-1] == D:
+            return D
+        return C
+    
+
+
+class ToughTifForTat(Player):
+    """
+    In the previous round, if any of the player defected,
+    defect on next round
+    """
+
+    # These are various properties for the strategy
+    name = "Tough Tit For Tat"
+    classifier = {
+        "memory_depth": 1,  # Four-Vector = (1.,0.,1.,0.)
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        """Actual strategy definition that determines player's action."""
+        if not self.history:
+            return C
+        if opponents[0].history[-1] == D or opponents[1].history[-1] == D:
+            return D
+        return C
+    
+
+class SoftTitFor2Tats(Player):
+    """
+    If in the last two rounds, both opponents defected
+    in both rounds, defect next round.
+    """
+
+    name = "Soft Tit For 2 Tats"
+    classifier = {
+        "memory_depth": 2,  # Long memory, memory-2
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+
+    
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        """If in the last two rounds, both opponents defected
+         in both rounds, defect next round.
+        """
+        if not self.history:
+            return C
+        if opponents[0].history[-2:] == [D, D] and opponents[0].history[-2:] == [D, D]:
+            return D
+        return C
+    
+class ToughTitFor2Tats(Player):
+    """If in the last two rounds, one of the opponents defected
+         in both rounds, defect next round
+    """
+
+    name = "Tough Tit For 2 Tats"
+    classifier = {
+        "memory_depth": 2,  # Long memory, memory-2
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+
+    
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        """If in the last two rounds, one of the opponents defected
+         in both rounds, defect next round
+        """
+        if not self.history:
+            return C
+        if opponents[0].history[-2:] == [D, D] or opponents[0].history[-2:] == [D, D]:
+            return D
+        return C
+    
+
+class SuperToughTitFor2Tats(Player):
+    """If in the last two rounds, there was two defections,
+      defect next round"""
+
+    name = "Super Tough Tit For 2 Tats"
+    classifier = {
+        "memory_depth": 2,  # Long memory, memory-2
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+
+    
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        """If in the last two rounds, there was two defections,
+        defect next round
+        """
+        if not self.history:
+            return C
+        recent_moves = opponents[0].history[-2:] + opponents[1].history[-2:]
+        if recent_moves.count(D) >= 2:
+            return D
+        return C
+

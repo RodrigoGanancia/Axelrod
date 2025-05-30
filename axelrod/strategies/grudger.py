@@ -1,5 +1,6 @@
 from axelrod.action import Action
 from axelrod.player import Player
+from typing import List
 
 C, D = Action.C, Action.D
 
@@ -417,3 +418,80 @@ class Capri(Player):
         if hist == [(D, D), (C, C), (C, C)]:
             return C
         return D
+    
+
+class SoftGrudger3p(Player):
+    """
+    A player starts by cooperating however will defect if at any point the
+    opponent has defected.
+
+    This strategy came 7th in Axelrod's original tournament.
+
+    Names:
+
+    - Friedman's strategy: [Axelrod1980]_
+    - Grudger: [Li2011]_
+    - Grim: [Berg2015]_
+    - Grim Trigger: [Banks1990]_
+    - Spite: [Beaufils1997]_
+    - Spiteful: [Mathieu2015]_
+    - Vengeful: [Ashlock2009]_
+    """
+
+    name = "Soft Grudger"
+    classifier = {
+        "memory_depth": float("inf"),
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        """Begins by playing C, then plays D for the remaining rounds if the
+        opponent ever plays D."""
+        if not self.history:
+            return C
+        if opponents[0].defections and opponents[1].defections:
+            return D
+        return C
+
+
+class ToughGrudger(Player):
+    """
+    A player starts by cooperating however will defect if at any point the
+    opponent has defected.
+
+    This strategy came 7th in Axelrod's original tournament.
+
+    Names:
+
+    - Friedman's strategy: [Axelrod1980]_
+    - Grudger: [Li2011]_
+    - Grim: [Berg2015]_
+    - Grim Trigger: [Banks1990]_
+    - Spite: [Beaufils1997]_
+    - Spiteful: [Mathieu2015]_
+    - Vengeful: [Ashlock2009]_
+    """
+
+    name = "Soft Grudger"
+    classifier = {
+        "memory_depth": float("inf"),
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        """Begins by playing C, then plays D for the remaining rounds if the
+        opponent ever plays D."""
+
+        if not self.history:
+            return C
+        if opponents[0].defections or opponents[1].defections:
+            return D
+        return C

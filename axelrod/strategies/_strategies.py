@@ -135,7 +135,7 @@ from .gobymajority import (
     HardGoByMajority20,
     HardGoByMajority40,
 )
-from .gradualkiller import GradualKiller
+from .gradualkiller import GradualKiller, ToughGradualKiller, SoftGradualKiller
 from .grudger import (
     Aggravater,
     Capri,
@@ -147,6 +147,8 @@ from .grudger import (
     OppositeGrudger,
     SoftGrudger,
     SpitefulCC,
+    SoftGrudger3p,
+    ToughGrudger
 )
 from .grumpy import Grumpy
 from .handshake import Handshake
@@ -196,7 +198,13 @@ from .memorytwo import MemoryTwoPlayer  # pylint: disable=unused-import
 from .momentum import Momentum
 from .mutual import Desperate, Hopeless, Willing
 from .negation import Negation
-from .oncebitten import FoolMeOnce, ForgetfulFoolMeOnce, OnceBitten
+from .oncebitten import (
+  FoolMeOnce,
+  ForgetfulFoolMeOnce,
+  OnceBitten,
+  SoftFoolMeOnce,
+  ToughFoolMeOnce,
+)
 from .prober import (
     CollectiveStrategy,
     Detective,
@@ -259,10 +267,15 @@ from .titfortat import (
     RandomTitForTat,
     SlowTitForTwoTats2,
     SneakyTitForTat,
+    SoftTifForTat,
+    SoftTitFor2Tats,
     SpitefulTitForTat,
+    SuperToughTitFor2Tats,
     SuspiciousTitForTat,
     TitFor2Tats,
     TitForTat,
+    ToughTifForTat,
+    ToughTitFor2Tats,
     TwoTitsForTat,
 )
 from .verybad import VeryBad
@@ -464,8 +477,13 @@ all_strategies = [
     ShortMem,
     SlowTitForTwoTats2,
     SneakyTitForTat,
+    SoftFoolMeOnce,
+    SoftGradualKiller,
     SoftGrudger,
+    SoftGrudger3p,
     SoftJoss,
+    SoftTifForTat,
+    SoftTitFor2Tats,
     SolutionB1,
     SolutionB5,
     SpitefulTitForTat,
@@ -473,6 +491,7 @@ all_strategies = [
     Stalker,
     StochasticCooperator,
     StochasticWSLS,
+    SuperToughTitFor2Tats,
     SuspiciousTitForTat,
     TF1,
     TF2,
@@ -482,6 +501,11 @@ all_strategies = [
     Thumper,
     TitFor2Tats,
     TitForTat,
+    ToughFoolMeOnce,
+    ToughGradualKiller,
+    ToughGrudger,
+    ToughTifForTat,
+    ToughTitFor2Tats,
     TrickyCooperator,
     TrickyDefector,
     TrickyLevelPunisher,

@@ -3,6 +3,7 @@ from typing import Any, Dict, Union
 
 from axelrod.action import Action
 from axelrod.player import Player
+from typing import List
 
 C, D = Action.C, Action.D
 
@@ -89,6 +90,23 @@ class GoByMajority(Player):
                 return C
             else:
                 return D
+        return C
+    
+    
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        """
+        Sums the two opponent's cooperations and defections, and selects majority
+        """
+        defections = 0
+        cooperations = 0
+
+        for i in range(2):
+            history = opponents[i].history[-self.memory :]
+            defections += sum([s == D for s in history])
+            cooperations += sum([s == C for s in history])
+
+        if defections > cooperations:
+            return D
         return C
 
 
@@ -245,3 +263,19 @@ class HardGoByMajority5(HardGoByMajority):
 
     def __init__(self) -> None:
         super().__init__(memory_depth=5)
+
+
+
+class SoftGoByMajority40(GoByMajority):
+    """
+    If at least one player has more/equal cooperations than defects,
+    cooperates next round.
+    """
+
+    name = "Go By Majority 40"
+    classifier = copy.copy(GoByMajority.classifier)
+    classifier["memory_depth"] = 40
+
+    def __init__(self) -> None:
+        super().__init__(memory_depth=5)
+

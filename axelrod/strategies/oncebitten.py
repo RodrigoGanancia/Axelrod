@@ -1,5 +1,6 @@
 from axelrod.action import Action
 from axelrod.player import Player
+from typing import List
 
 C, D = Action.C, Action.D
 
@@ -78,7 +79,7 @@ class FoolMeOnce(Player):
         if opponent.defections > 1:
             return D
         return C
-
+    
 
 class ForgetfulFoolMeOnce(Player):
     """
@@ -125,3 +126,65 @@ class ForgetfulFoolMeOnce(Player):
         if self.D_count > 1:
             return D
         return C
+    
+
+
+class SoftFoolMeOnce(Player):
+    """
+    Forgives one D, if both played,
+    then retaliates forever on a second D.
+
+    Names:
+
+    - Fool me once: Original name by Marc Harper
+    """
+
+    name = "Soft Fool Me Once"
+    classifier = {
+        "memory_depth": float("inf"),  # Long memory
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+    
+        
+    def strategy_multi(self, opponent: List[Player]) -> Action:
+        """Actual strategy definition that determines player's action."""
+        if not self.history:
+            return C
+        if opponent[0].defections > 1 and opponent[1].defections > 1:
+            return D
+        return C
+    
+
+class ToughFoolMeOnce(Player):
+    """
+    Forgives one D, if any player played it,
+    then retaliates forever on a second D.
+
+    Names:
+
+    - Fool me once: Original name by Marc Harper
+    """
+
+    name = "Tough Fool Me Once"
+    classifier = {
+        "memory_depth": float("inf"),  # Long memory
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+        
+    def strategy_multi(self, opponent: List[Player]) -> Action:
+        """Actual strategy definition that determines player's action."""
+        if not self.history:
+            return C
+        if opponent[0].defections > 1 or opponent[1].defections > 1:
+            return D
+        return C
+    
+    

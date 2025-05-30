@@ -1,6 +1,7 @@
 from axelrod.action import Action
 from axelrod.player import Player
 from axelrod.strategy_transformers import FinalTransformer
+from typing import List
 
 C, D = Action.C, Action.D
 
@@ -29,6 +30,10 @@ class BackStabber(Player):
     def strategy(self, opponent: Player) -> Action:
         """Actual strategy definition that determines player's action."""
         return _backstabber_strategy(opponent)
+    
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        """If any of the opponents has defected 3 times, will defect forever."""
+        return _backstabber_strategy_3(opponents)
 
 
 @FinalTransformer((D, D), name_prefix=None)  # End with two defections
@@ -61,6 +66,13 @@ class DoubleCrosser(Player):
         if _opponent_triggers_alt_strategy(opponent):
             return _alt_strategy(opponent)
         return _backstabber_strategy(opponent)
+    
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        """Actual strategy definition that determines player's action."""
+        if _opponent_triggers_alt_strategy(opponents[0]) \
+            and _opponent_triggers_alt_strategy(opponents[0]):
+            return _alt_strategy_3(opponents)
+        return _backstabber_strategy_3(opponents)
 
 
 def _backstabber_strategy(opponent: Player) -> Action:
@@ -75,6 +87,19 @@ def _backstabber_strategy(opponent: Player) -> Action:
     return C
 
 
+def _backstabber_strategy_3(opponents: List[Player]) -> Action:
+    """
+    Cooperates until any of the opponents defects a total of four times, then always
+    defects.
+    """
+    if not opponents[0].history and not opponents[1].history:
+        return C
+    if opponents[0].defections > 3 or opponents[1].defections > 3:
+        return D
+    return C
+
+
+
 def _alt_strategy(opponent: Player) -> Action:
     """
     If opponent's previous two plays were defect, then defects on next round.
@@ -84,6 +109,18 @@ def _alt_strategy(opponent: Player) -> Action:
     if previous_two_plays == [D, D]:
         return D
     return C
+
+def _alt_strategy_3(opponents: List[Player]) -> Action:
+    """
+    In the last two rounds, if in each round any of the opponents defected,
+    then defects on next round.
+    """
+
+    if  (opponents[0].history[-2:] == D or opponents[1].history[-2] == D) \
+        and (opponents[0].history[-1:] == D or opponents[1].history[-1] == D):
+        return D
+    return C
+
 
 
 def _opponent_triggers_alt_strategy(opponent: Player) -> bool:
@@ -97,6 +134,7 @@ def _opponent_triggers_alt_strategy(opponent: Player) -> bool:
         return False
     current_round = len(opponent.history) + 1
     return before_alt_strategy < current_round <= last_round_of_alt_strategy
+
 
 
 def _opponent_defected_in_first_n_rounds(
