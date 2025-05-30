@@ -144,6 +144,7 @@ class ThreePlayerGame:
     def __init__(self, payoff_map):
         # payoff_map: Dict[Tuple[Action,Action,Action], Tuple[float,float,float]]
         self.payoff_map = payoff_map
+        print(f"Payoff map: {self.payoff_map}")
 
     def score(self, triple):
         """
@@ -161,20 +162,25 @@ class ThreePlayerGame:
 # -------------------------------------------------------------------
 # A built-in “default” 3-player PD payoff map for quick experiments:
 
-_default_three_payoff_map = {}
-for a1 in (C, D):
-    for a2 in (C, D):
-        for a3 in (C, D):
-            k = sum(1 for a in (a1, a2, a3) if a == C)
-            # cooperators get +1 per cooperator, defectors get +2 if any cooperator else 0
-            scores = tuple(
-                (1 * k) if a == C else (2 if k > 0 else 0)
-                for a in (a1, a2, a3)
-            )
-            _default_three_payoff_map[(a1, a2, a3)] = scores
+def make_pairwise_sum_payoff_map(game, normalize=False):
+    payoff_map = {}
+    for a1 in (C,D):
+      for a2 in (C,D):
+        for a3 in (C,D):
+          s12,_ = game.scores[(a1,a2)]
+          s13,_ = game.scores[(a1,a3)]
+          s21,_ = game.scores[(a2,a1)]
+          s23,_ = game.scores[(a2,a3)]
+          s31,_ = game.scores[(a3,a1)]
+          s32,_ = game.scores[(a3,a2)]
+          t1, t2, t3 = s12+s13, s21+s23, s31+s32
+          if normalize:
+            t1/=2; t2/=2; t3/=2
+          payoff_map[(a1,a2,a3)] = (t1,t2,t3)
+    return payoff_map
 
 #: a handy default instance you can import directly
-DefaultThreePlayerGame = ThreePlayerGame(_default_three_payoff_map)
+DefaultThreePlayerGame = ThreePlayerGame(make_pairwise_sum_payoff_map(Game(), normalize=True))
 # -------------------------------------------------------------------
 
 DefaultGame = Game()

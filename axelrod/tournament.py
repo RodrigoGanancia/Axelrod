@@ -17,7 +17,7 @@ from axelrod.player import Player
 from .game import Game
 from .match import Match, ThreeMatch
 from .match_generator import MatchChunk, MatchGenerator, complete_3hypergraph
-from .result_set import ResultSet
+from .result_set import ResultSet, ThreeResultSet
 
 C, D = Action.C, Action.D
 
@@ -159,13 +159,24 @@ class Tournament(object):
 
         result_set = None
         if build_results:
-            result_set = ResultSet(
-                filename=self.filename,
-                players=[str(p) for p in self.players],
-                repetitions=self.repetitions,
-                processes=processes,
-                progress_bar=progress_bar,
-            )
+            if self.group_size == 2:
+                result_set = ResultSet(
+                    filename=self.filename,
+                    players=[str(p) for p in self.players],
+                    repetitions=self.repetitions,
+                    processes=processes,
+                    progress_bar=progress_bar,
+                )
+            else:
+                print("Building 3-player result set")
+                result_set = ThreeResultSet(
+                    filename=self.filename,
+                    players=[str(p) for p in self.players],
+                    repetitions=self.repetitions,
+                    processes=processes,
+                    progress_bar=progress_bar,
+                )
+                
         if self._temp_file_descriptor is not None:
             assert self.filename is not None
             os.close(self._temp_file_descriptor)
@@ -221,7 +232,7 @@ class Tournament(object):
                     "Opponent1 name",
                     "Opponent2 name",
                     "History",
-                    "Score",
+                    #"Score",
                 ]
             if build_results:
                 header.extend(
@@ -342,16 +353,23 @@ class Tournament(object):
             for m, player_index in enumerate(index_pair):
                 others = [i for i in index_pair if i != player_index]
                 row = [
-                    self.num_interactions,
-                    player_index,
-                    others[0],
-                    others[1],
-                    repetition,
-                    str(self.players[player_index]),
-                    str(self.players[others[0]]),
-                    str(self.players[others[1]]),
-                    self.custom_3p_history_string(history, m),
-                    final_scores[m],
+                    self.num_interactions, # interaction index
+                    player_index, # player index
+                    others[0], # opponent1 index
+                    others[1], # opponent2 index
+                    repetition, # repetition
+                    str(self.players[player_index]), # player name
+                    str(self.players[others[0]]), # opponent1 name
+                    str(self.players[others[1]]), # opponent2 name
+                    self.custom_3p_history_string(history, m), # history
+                    final_scores[m], # score
+                    final_scores[m] - sum(final_scores) + final_scores[m], # score difference TODO: check
+                    self.turns, # turns
+                    final_scores[m] / float(self.turns), # score per turn
+                    0, # score difference per turn (ignored rn)
+                    int(final_scores[m] == max(final_scores)), # win
+                    0, # initial cooperation (ignored rn)
+                    *([0]*14) # cooperation count, etc etc
                 ]
                 writer.writerow(row)
                 self.num_interactions += 1

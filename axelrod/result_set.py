@@ -92,7 +92,6 @@ class ResultSet:
         Reshape the various pandas series objects to be of the required form and
         set the corresponding attributes.
         """
-
         self.payoffs = self._reshape_three_dim_list(
             mean_per_reps_player_opponent_df["Score per turn"],
             first_dimension=range(self.num_players),
@@ -582,12 +581,96 @@ class ResultSet:
         """
         if "Opponent1 index" in df.columns:
             # 3p
-            groups = ["Repetition", "Player index", "Opponent1 index", "Opponent2 index"]
-            columns = ["Score"]
-            mean_per_reps_player_opponent_task = df.groupby(groups)[columns].mean()
+            # mean per rep per triple (Turns, Score per turn, Score difference per turn)
             groups = ["Repetition", "Player index", "Opponent1 index", "Opponent2 index"]
             columns = ["Turns", "Score per turn", "Score difference per turn"]
             mean_per_reps_player_opponent_task = df.groupby(groups)[columns].mean()
+            
+            # sum per player–pair of opponents (total scores & turns)
+            groups = ["Player index", "Opponent1 index", "Opponent2 index"]
+            columns = [
+                "Cooperation count",
+                "CC count",
+                "CD count",
+                "DC count",
+                "DD count",
+                "CC to C count",
+                "CC to D count",
+                "CD to C count",
+                "CD to D count",
+                "DC to C count",
+                "DC to D count",
+                "DD to C count",
+                "DD to D count",
+                "Good partner",
+            ]
+            sum_per_player_opponent = df.groupby(groups)[columns].sum()
+            
+            ignore_self_interactions_task = (
+                (df["Player index"] != df["Opponent1 index"])
+                & (df["Player index"] != df["Opponent2 index"])
+            )
+            adf = df[ignore_self_interactions_task]
+            
+            # sum per player–repetition (total Score, total Wins if you define Win)
+            sum_per_player_repetition = df.groupby([
+                'Player index', 'Repetition'
+            ])[[
+                'Score'
+            ]].sum()
+            # 4. Normalised average score per turn per rep
+            normalised_scores = df.groupby([
+                'Player index', 'Repetition'
+            ])['Score per turn'].mean()
+            # 5. Initial cooperation count (if you record it)
+            initial_cooperation = df.groupby('Player index')['Initial cooperation'].sum()
+            # 6. Total interactions per player
+            interactions_count = df.groupby('Player index')['Player index'].count()
+            
+            
+            
+            groups = ["Repetition", "Player index", "Opponent index"]
+            columns = ["Turns", "Score per turn", "Score difference per turn"]
+            
+            mean_per_reps_player_opponent_task = df.groupby(groups)[columns].mean()
+            groups = ["Player index", "Opponent index"]
+            columns = [
+                "Cooperation count",
+                "CC count",
+                "CD count",
+                "DC count",
+                "DD count",
+                "CC to C count",
+                "CC to D count",
+                "CD to C count",
+                "CD to D count",
+                "DC to C count",
+                "DC to D count",
+                "DD to C count",
+                "DD to D count",
+                "Good partner",
+            ]
+            sum_per_player_opponent_task = df.groupby(groups)[columns].sum()
+
+            ignore_self_interactions_task = (
+                df["Player index"] != df["Opponent index"]
+            )
+            adf = df[ignore_self_interactions_task]
+
+            groups = ["Player index", "Repetition"]
+            columns = ["Win", "Score"]
+            sum_per_player_repetition_task = adf.groupby(groups)[columns].sum()
+
+            groups = ["Player index", "Repetition"]
+            column = "Score per turn"
+            normalised_scores_task = adf.groupby(groups)[column].mean()
+
+            groups = ["Player index"]
+            column = "Initial cooperation"
+            initial_cooperation_count_task = adf.groupby(groups)[column].sum()
+            interactions_count_task = adf.groupby("Player index")[
+                "Player index"
+            ].count()
             # TODO -> IMPLEMENT REST
             return (
                 mean_per_reps_player_opponent_task,
@@ -604,9 +687,6 @@ class ResultSet:
         columns = ["Turns", "Score per turn", "Score difference per turn"]
         
         mean_per_reps_player_opponent_task = df.groupby(groups)[columns].mean()
-        groups = ["Repetition", "Player index", "Opponent index"]
-        columns = ["Turns", "Score per turn", "Score difference per turn"]
-
         groups = ["Player index", "Opponent index"]
         columns = [
             "Cooperation count",
@@ -692,15 +772,15 @@ class ResultSet:
                 self.cooperation == other.cooperation,
                 self.normalised_cooperation == other.normalised_cooperation,
                 self.vengeful_cooperation == other.vengeful_cooperation,
-                self.cooperating_rating == other.cooperating_rating,
+                #self.cooperating_rating == other.cooperating_rating,
                 self.good_partner_matrix == other.good_partner_matrix,
                 self.good_partner_rating == other.good_partner_rating,
-                list_equal_with_nans(
-                    self.eigenmoses_rating, other.eigenmoses_rating
-                ),
-                list_equal_with_nans(
-                    self.eigenjesus_rating, other.eigenjesus_rating
-                ),
+                #list_equal_with_nans(
+                #    self.eigenmoses_rating, other.eigenmoses_rating
+                #),
+                #list_equal_with_nans(
+                #    self.eigenjesus_rating, other.eigenjesus_rating
+                #),
             ]
         )
 
@@ -790,7 +870,7 @@ class ResultSet:
             zip(
                 self.players,
                 median_scores,
-                self.cooperating_rating,
+                #self.cooperating_rating,
                 median_wins,
                 self.initial_cooperation_rate,
                 original_index,
@@ -824,6 +904,383 @@ class ResultSet:
             for player in summary_data:
                 writer.writerow(player)
 
+
+class ThreeResultSet(ResultSet):
+    def _build_tasks(self, df):
+        print("DEBUG columns available: ", df.columns)
+        print("amount of columns: ", len(df.columns))
+        # 1. Mean per repetition × player × opp1 × opp2
+        groups = ['Repetition', 'Player index', 'Opponent1 index', 'Opponent2 index']
+        columns = ['Turns', 'Score per turn', 'Score difference per turn']
+        mean_per_reps = df.groupby(groups)[columns].mean()
+
+        # 2. Sum per player × (opp1, opp2)
+        groups = ['Player index', 'Opponent1 index', 'Opponent2 index']
+        sum_cols = ['Cooperation count',
+                    'CC count', 'CD count', 'DC count', 'DD count',
+                    'CC to C count', 'CC to D count',
+                    'CD to C count', 'CD to D count',
+                    'DC to C count', 'DC to D count',
+                    'DD to C count', 'DD to D count',
+                    'Good partner']
+        sum_per_player_opponent = df.groupby(groups)[sum_cols].sum()
+        
+        ignore_self_interactions = (
+            (df['Player index'] != df['Opponent1 index']) &
+            (df['Player index'] != df['Opponent2 index'])
+        )
+        adf = df[ignore_self_interactions]
+        
+        # 3. Sum per player × repetition
+        groups = ['Player index', 'Repetition']
+        columns = ['Win', 'Score']
+        sum_per_player_repetition = adf.groupby(groups)[columns].sum()
+
+        # 4. Normalised score per turn per player × repetition
+        groups = ['Player index', 'Repetition']
+        normalised_scores = df.groupby(groups)['Score per turn'].mean()
+
+        # 5. Initial cooperation count per player
+        initial_cooperation = df.groupby('Player index')['Initial cooperation'].sum()
+
+        # 6. Interaction counts per player (for normalization)
+        interactions_count = df.groupby('Player index')['Player index'].count()
+
+        return (
+            mean_per_reps,
+            sum_per_player_opponent,
+            sum_per_player_repetition,
+            normalised_scores,
+            initial_cooperation,
+            interactions_count,
+        )
+    
+    
+    def _reshape_out(
+        self,
+        mean_df,
+        sum_opp_df,
+        sum_rep_df,
+        norm_scores_series,
+        init_coop_series,
+        interaction_count_series,
+    ):
+        P, R = self.num_players, self.repetitions
+        # --- Payoff per turn: 4D list [player][opp1][opp2][repetition]
+        self.payoffs = self._reshape_four_dim_list(
+            mean_df['Score per turn'],
+            dims=(range(P), range(P), range(P), range(R)),
+            key_order=['Player index', 'Opponent1 index', 'Opponent2 index', 'Repetition']
+        )
+        
+        # --- Payoff stddevs across repetitions
+        self.payoff_stddevs = self._reshape_four_dim_list(
+            mean_df['Score per turn'],
+            dims=(range(P), range(P), range(P), None),
+            key_order=['Player index', 'Opponent1 index', 'Opponent2 index', 'Repetition'],
+            func=np.std
+        )
+        
+        # --- Score differences: (s1-s2, s1-s3, s2-s3) stored per rep
+        # We compute pairwise diffs on the 4D payoffs
+        self.score_diffs = [[[ [
+            self.payoffs[i][j][k][r] - self.payoffs[j][i][k][r] if i<j else
+            self.payoffs[i][j][k][r] - self.payoffs[k][j][i][r]
+            for r in range(R)
+        ] for k in range(P)] for j in range(P)] for i in range(P)]
+
+        # --- Match lengths per turn: reuse 'Turns'
+        self.match_lengths = self._reshape_four_dim_list(
+            mean_df['Turns'],
+            dims=(range(P), range(P), range(P), range(R)),
+            key_order=['Player index', 'Opponent1 index', 'Opponent2 index', 'Repetition']
+        )
+        
+        # --- Total scores per player × rep
+        # sum_rep_df: MultiIndex [(Player,Repetition)] → Score
+        self.scores = [
+            [ sum_rep_df.loc[(i, r)]['Score'] if (i, r) in sum_rep_df.index else 0
+              for r in range(R)
+            ] for i in range(P)
+        ]
+        print("Scores: ", self.scores)
+        self.normalised_scores = self.scores
+
+        # --- Normalised scores per rep
+        # self.normalised_scores = [
+        #     [ norm_scores_series.loc[(i, r)] if (i, r) in norm_scores_series.index else 0
+        #       for r in range(R)
+        #     ] for i in range(P)
+        # ]
+
+        # --- Cooperation and partner metrics per player × opp1 × opp2
+        # sum_opp_df: MultiIndex [(Player,Opp1,Opp2)] → multiple cols
+        def get_sum(i,j,k, col):
+            key = (i, j, k)
+            return sum_opp_df.loc[key][col] if key in sum_opp_df.index else 0
+
+        # Cooperation count
+        self.cooperation = [ [ [ get_sum(i,j,k,'Cooperation count')
+                                 for k in range(P)] for j in range(P)] for i in range(P)]
+
+        # State distributions
+        self.state_distribution = [ [ [
+            Counter({(C,C): get_sum(i,j,k,'CC count'),
+                     (C,D): get_sum(i,j,k,'CD count'),
+                     (D,C): get_sum(i,j,k,'DC count'),
+                     (D,D): get_sum(i,j,k,'DD count')})
+            for k in range(P)] for j in range(P)] for i in range(P)]
+
+        # Normalised state distributions
+        self.normalised_state_distribution = []
+        for i in range(P):
+            row_i = []
+            for j in range(P):
+                row_j = []
+                for k in range(P):
+                    sd = self.state_distribution[i][j][k]  # <-- this is a Counter
+                    total = sum(sd.values())
+                    if total > 0:
+                        # build normalized Counter(state → probability)
+                        norm = Counter({ state: count / total for state, count in sd.items() })
+                    else:
+                        norm = Counter()
+                    row_j.append(norm)
+                row_i.append(row_j)
+            self.normalised_state_distribution.append(row_i)
+
+        # State→action distributions
+        # Build a mapping for each player i, each opponent pair (j,k),
+        # of how often each prior state led to cooperation or defection.
+        self.state_to_action_distribution = []
+        for i in range(P):
+            player_list = []
+            for j in range(P):
+                opp_list = []
+                for k in range(P):
+                    counter = Counter()
+                    # For each possible state, e.g. (C,C), look up counts
+                    for state, prefix in [((C, C), 'CC'), ((C, D), 'CD'),
+                                          ((D, C), 'DC'), ((D, D), 'DD')]:
+                        # Count of transitions from this state to C
+                        c_count = get_sum(i, j, k, f"{prefix} to C count")
+                        # Count of transitions from this state to D
+                        d_count = get_sum(i, j, k, f"{prefix} to D count")
+                        if c_count > 0:
+                            counter[(state, C)] = c_count
+                        if d_count > 0:
+                            counter[(state, D)] = d_count
+                    opp_list.append(counter)
+                player_list.append(opp_list)
+            self.state_to_action_distribution.append(player_list)
+
+        # Normalised state→action distributions
+        # Convert raw counts into probabilities per state.
+        self.normalised_state_to_action_distribution = []
+        for i in range(P):
+            player_norm = []
+            for j in range(P):
+                opp_norm = []
+                for k in range(P):
+                    raw_counter = self.state_to_action_distribution[i][j][k]
+                    total = sum(raw_counter.values())
+                    norm_counter = Counter()
+                    if total > 0:
+                        for key, cnt in raw_counter.items():
+                            norm_counter[key] = cnt / total
+                    opp_norm.append(norm_counter)
+                player_norm.append(opp_norm)
+            self.normalised_state_to_action_distribution.append(player_norm)
+
+        # Initial cooperation & rates
+        self.initial_cooperation_count = [ init_coop_series.get(i,0)
+                                           for i in range(P) ]
+        self.initial_cooperation_rate = [ init_coop_series.get(i,0) / interaction_count_series.get(i,1)
+                                          if interaction_count_series.get(i,0)>0 else 0
+                                          for i in range(P) ]
+
+        # Good partner matrix & rating
+        self.good_partner_matrix = [ [ get_sum(i,j,k,'Good partner')
+                                       for k in range(P)] for j in range(P)]
+        self.good_partner_rating = [ sum(self.good_partner_matrix[i]) /
+                                     max(1, interaction_count_series.get(i,0))
+                                     for i in range(P) ]
+
+        # Vengeful cooperation
+        # Vengeful cooperation: D_ij = 2*(p_CC - 0.5),
+        # where p_CC is the probability of (C,C) from the normalized state distribution
+        self.vengeful_cooperation = []
+        for i in range(P):
+            row_i = []
+            for j in range(P):
+                row_j = []
+                for k in range(P):
+                    # p_CC = normalized probability of state (C,C)
+                    p_CC = self.normalised_state_distribution[i][j][k].get((C, C), 0)
+                    row_j.append(2 * (p_CC - 0.5))
+                row_i.append(row_j)
+            self.vengeful_cooperation.append(row_i)
+            
+        self.normalised_cooperation = []
+        for i in range(P):
+            row_i = []
+            for j in range(P):
+                row_j = []
+                for k in range(P):
+                    coop = self.cooperation[i][j][k]
+                    turns_list = self.match_lengths[i][j][k]
+                    total_turns = sum(turns_list) if isinstance(turns_list, list) else turns_list
+                    rate = coop / total_turns if total_turns else 0
+                    row_j.append(rate)
+                row_i.append(row_j)
+            self.normalised_cooperation.append(row_i)
+        # Collapse into a 2D adjacency matrix
+        coop_matrix = [[0]*P for _ in range(P)]
+        for i in range(P):
+            for j in range(P):
+                # average across all third players k ≠ i,j
+                total = 0
+                count = 0
+                for k in range(P):
+                    if k in (i,j):
+                        continue
+                    total += self.normalised_cooperation[i][j][k]
+                    count += 1
+                coop_matrix[i][j] = total / count if count else 0
+
+        self.normalised_cooperation = coop_matrix
+
+        # Eigen ratings (reuse parent methods)
+        #self.eigenjesus_rating = super()._build_eigenjesus_rating()
+        #self.eigenmoses_rating = super()._build_eigenmoses_rating()
+
+        # Cooperation rating
+        # = super()._build_cooperating_rating()
+
+        # Ranking and names
+        self.ranking = super()._build_ranking()
+        self.ranked_names = super()._build_ranked_names()
+        
+        # TODO -> fix
+        self.wins = [
+        [
+            sum_rep_df.loc[(i, r)]['Win']
+            if (i, r) in sum_rep_df.index else 0
+            for r in range(R)
+        ]
+        for i in range(P)
+        ]
+        print("Wins: ", self.wins)
+        
+        
+        
+    def summarise(self):
+        P = self.num_players
+        R = self.repetitions
+        
+        self.player = namedtuple(
+            "Player",
+            ["Rank","Name","Median_score","Cooperation_rating",
+             "Wins","Initial_C_rate","Original_index",
+             "CC_rate","CD_rate","DC_rate","DD_rate",
+             "CC_to_C_rate","CD_to_C_rate","DC_to_C_rate","DD_to_C_rate"]
+        )
+        
+        # 1. Payoff ranking and median scores reuse parent logic
+        median_scores = list(map(np.nanmedian, self.normalised_scores))
+        # wins should already be set
+        median_wins   = list(map(np.nanmedian, self.wins))
+        print("Median wins: ", median_wins)
+
+        # 2. Build state_prob for 3p by summing over all pairs (j,k)
+        states = [(C,C),(C,D),(D,C),(D,D)]
+        state_prob = []
+        for i in range(P):
+            # aggregate across all opponent pairs j,k != i
+            counts = {state: 0 for state in states}
+            total = 0
+            for j in range(P):
+                for k in range(P):
+                    if j==i or k==i: continue
+                    ctr = self.normalised_state_distribution[i][j][k]
+                    for state in states:
+                        val = ctr.get(state, 0)
+                        counts[state] += val
+                        total += val
+            # normalize
+            if total > 0:
+                state_prob.append([counts[s]/total for s in states])
+            else:
+                state_prob.append([0]*4)
+
+        # 3. Build state_to_C_prob similarly by averaging P(C|state) across pairs
+        state_to_C_prob = []
+        for i in range(P):
+            probs = []
+            for state in states:
+                sum_p = 0
+                count = 0
+                for j in range(P):
+                    for k in range(P):
+                        if j==i or k==i: continue
+                        raw = self.normalised_state_to_action_distribution[i][j][k]
+                        p_c = raw.get((state, C), 0)
+                        sum_p += p_c
+                        count += 1
+                probs.append(sum_p/count if count else 0)
+            state_to_C_prob.append(probs)
+
+        # 4. Build summary rows
+        summary = []
+        for i in range(P):
+            summary.append(
+                [
+                    # Rank, Name, Median_score, Cooperation_rating, Wins, Initial_C_rate
+                    self.ranking.index(i), str(self.players[i]),
+                    median_scores[i], 0, # TODO -> fix and place self.cooperating_rating[i] #self.cooperating_rating[i],
+                    median_wins[i], self.initial_cooperation_rate[i],
+                    # then 4 state probabilities and 4 to-C probabilities
+                    *state_prob[i], *state_to_C_prob[i]
+                ]
+            )
+        return summary
+            
+    
+    
+    
+    def _reshape_four_dim_list(
+        self,
+        series,
+        dims,
+        key_order,
+        func=np.mean
+    ):
+    
+        result = []
+        iters = dims
+        for i in iters[0]:
+            mat1 = []
+            for j in iters[1]:
+                mat2 = []
+                for k in iters[2]:
+                    vec = []
+                    if iters[3] is not None:
+                        for r in iters[3]:
+                            idx = (i,j,k,r)
+                            if idx in series.index:
+                                vec.append(series.loc[idx])
+                            else:
+                                vec.append(0)
+                    else:
+                        # collapse last dim: aggregate all reps
+                        values = [series.loc[(i,j,k,r)]
+                                  for r in range(self.repetitions)
+                                  if (i,j,k,r) in series.index]
+                        vec = func(values) if values else 0
+                    mat2.append(vec)
+                mat1.append(mat2)
+            result.append(mat1)
+        return result
 
 def create_counter_dict(df, player_index, opponent_index, key_map):
     """

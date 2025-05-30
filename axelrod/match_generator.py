@@ -99,9 +99,9 @@ class MatchGenerator(object):
             edges = self.edges
 
         # prints edges info
-        print(f"Edges size: {len(edges)}")
-        for edge in edges:
-            print(f"Edge: {edge}")
+        #print(f"Edges size: {len(edges)}")
+        #for edge in edges:
+        #    print(f"Edge: {edge}")
         
         for index_pair in edges:
             match_params = self.build_single_match_params()

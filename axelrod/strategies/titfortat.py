@@ -4,6 +4,7 @@ from axelrod.strategy_transformers import (
     FinalTransformer,
     TrackHistoryTransformer,
 )
+from typing import List
 
 C, D = Action.C, Action.D
 
@@ -44,6 +45,16 @@ class TitForTat(Player):
             return C
         # React to the opponent's last move
         if opponent.history[-1] == D:
+            return D
+        return C
+    
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        """Actual strategy definition that determines player's action."""
+        # First move
+        if not self.history:
+            return C
+        # React to the opponent's last move: if either defected, react
+        if opponents[0].history[-1] == D or opponents[1].history[-1] == D:
             return D
         return C
 
