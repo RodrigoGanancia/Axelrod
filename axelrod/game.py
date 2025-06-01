@@ -144,7 +144,7 @@ class ThreePlayerGame:
     def __init__(self, payoff_map):
         # payoff_map: Dict[Tuple[Action,Action,Action], Tuple[float,float,float]]
         self.payoff_map = payoff_map
-        print(f"Payoff map: {self.payoff_map}")
+        #print(f"Payoff map: {self.payoff_map}")
 
     def score(self, triple):
         """

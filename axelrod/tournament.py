@@ -235,31 +235,60 @@ class Tournament(object):
                     #"Score",
                 ]
             if build_results:
-                header.extend(
-                    [
-                        "Score",
-                        "Score difference",
-                        "Turns",
-                        "Score per turn",
-                        "Score difference per turn",
-                        "Win",
-                        "Initial cooperation",
-                        "Cooperation count",
-                        "CC count",
-                        "CD count",
-                        "DC count",
-                        "DD count",
-                        "CC to C count",
-                        "CC to D count",
-                        "CD to C count",
-                        "CD to D count",
-                        "DC to C count",
-                        "DC to D count",
-                        "DD to C count",
-                        "DD to D count",
-                        "Good partner",
-                    ]
-                )
+                if self.group_size == 2:
+                    header.extend(
+                        [
+                            "Score",
+                            "Score difference",
+                            "Turns",
+                            "Score per turn",
+                            "Score difference per turn",
+                            "Win",
+                            "Initial cooperation",
+                            "Cooperation count",
+                            "CC count",
+                            "CD count",
+                            "DC count",
+                            "DD count",
+                            "CC to C count",
+                            "CC to D count",
+                            "CD to C count",
+                            "CD to D count",
+                            "DC to C count",
+                            "DC to D count",
+                            "DD to C count",
+                            "DD to D count",
+                            "Good partner",
+                        ]
+                    )
+                else:
+                    # TODO -> change
+                    header.extend(
+                        [
+                            "Score",
+                            "Score difference",
+                            "Turns",
+                            "Score per turn",
+                            "Score difference per turn",
+                            "Win",
+                            "Initial cooperation",
+                            "Cooperation count",
+                            "CC count",
+                            "CD count",
+                            "DC count",
+                            "DD count",
+                            "CC to C count",
+                            "CC to D count",
+                            "CD to C count",
+                            "CD to D count",
+                            "DC to C count",
+                            "DC to D count",
+                            "DD to C count",
+                            "DD to D count",
+                            "Good partner",
+                        ]
+                    )
+                    
 
             writer.writerow(header)
         return file_obj, writer
@@ -368,8 +397,9 @@ class Tournament(object):
                     final_scores[m] / float(self.turns), # score per turn
                     0, # score difference per turn (ignored rn)
                     int(final_scores[m] == max(final_scores)), # win
-                    0, # initial cooperation (ignored rn)
-                    *([0]*14) # cooperation count, etc etc
+                    0, # initial cooperation (ignored rn),
+                    sum(1 for turn in history if turn[m] == C), # cooperation count
+                    *([0]*13) # cooperation count, etc etc
                 ]
                 writer.writerow(row)
                 self.num_interactions += 1

@@ -970,14 +970,16 @@ class ThreeResultSet(ResultSet):
         self.payoffs = self._reshape_four_dim_list(
             mean_df['Score per turn'],
             dims=(range(P), range(P), range(P), range(R)),
-            key_order=['Player index', 'Opponent1 index', 'Opponent2 index', 'Repetition']
+            # player index, opp1, opp2, repetition
+            key_order=[3,0,1,2],
         )
         
         # --- Payoff stddevs across repetitions
         self.payoff_stddevs = self._reshape_four_dim_list(
             mean_df['Score per turn'],
             dims=(range(P), range(P), range(P), None),
-            key_order=['Player index', 'Opponent1 index', 'Opponent2 index', 'Repetition'],
+            # player index, opp1, opp2, repetition
+            key_order=[3,0,1,2],
             func=np.std
         )
         
@@ -993,7 +995,8 @@ class ThreeResultSet(ResultSet):
         self.match_lengths = self._reshape_four_dim_list(
             mean_df['Turns'],
             dims=(range(P), range(P), range(P), range(R)),
-            key_order=['Player index', 'Opponent1 index', 'Opponent2 index', 'Repetition']
+            # player index, opp1, opp2, repetition
+            key_order=[3,0,1,2] 
         )
         
         # --- Total scores per player × rep
@@ -1003,7 +1006,7 @@ class ThreeResultSet(ResultSet):
               for r in range(R)
             ] for i in range(P)
         ]
-        print("Scores: ", self.scores)
+        #print("Scores: ", self.scores)
         self.normalised_scores = self.scores
 
         # --- Normalised scores per rep
@@ -1020,8 +1023,11 @@ class ThreeResultSet(ResultSet):
             return sum_opp_df.loc[key][col] if key in sum_opp_df.index else 0
 
         # Cooperation count
-        self.cooperation = [ [ [ get_sum(i,j,k,'Cooperation count')
-                                 for k in range(P)] for j in range(P)] for i in range(P)]
+        self.cooperation = [ 
+            [ [ get_sum(i,j,k,'Cooperation count')
+                for k in range(P)] 
+                for j in range(P)] 
+                for i in range(P)]
 
         # State distributions
         self.state_distribution = [ [ [
@@ -1170,7 +1176,43 @@ class ThreeResultSet(ResultSet):
         ]
         for i in range(P)
         ]
-        print("Wins: ", self.wins)
+        
+        self.match_lengths_3D = [
+            [
+                [
+                    sum(self.match_lengths[i][j][k])
+                    for k in range(P)
+                ]
+                for j in range(P)
+            ]
+            for i in range(P)
+        ]
+        
+        cooperating_rating_3P = []
+        for i in range(P):
+            # sum_i_coops = Σ_{j,k ≠ i} self.cooperation[i][j][k]
+            sum_i_coops = 0
+            # sum_i_turns = Σ_{j,k ≠ i} self.match_lengths_3D[i][j][k]
+            sum_i_turns = 0
+
+            for j in range(P):
+                if j == i:
+                    continue
+                for k in range(P):
+                    if k == i or k == j:
+                        continue
+                    sum_i_coops += self.cooperation[i][j][k]
+                    sum_i_turns += self.match_lengths_3D[i][j][k]
+
+            # Avoid division by zero: if sum_i_turns==0, define rating=0
+            if sum_i_turns > 0:
+                cooperating_rating_3P.append(sum_i_coops / sum_i_turns)
+            else:
+                print("Warning: Player {} has no interactions.".format(i))
+                cooperating_rating_3P.append(0)
+        self.cooperating_rating = cooperating_rating_3P
+        
+        #print("Wins: ", self.wins)
         
         
         
@@ -1190,7 +1232,7 @@ class ThreeResultSet(ResultSet):
         median_scores = list(map(np.nanmedian, self.normalised_scores))
         # wins should already be set
         median_wins   = list(map(np.nanmedian, self.wins))
-        print("Median wins: ", median_wins)
+        #print("Median wins: ", median_wins)
 
         # 2. Build state_prob for 3p by summing over all pairs (j,k)
         states = [(C,C),(C,D),(D,C),(D,D)]
@@ -1232,15 +1274,19 @@ class ThreeResultSet(ResultSet):
 
         # 4. Build summary rows
         summary = []
-        for i in range(P):
+        for player in range(P):
             summary.append(
                 [
                     # Rank, Name, Median_score, Cooperation_rating, Wins, Initial_C_rate
-                    self.ranking.index(i), str(self.players[i]),
-                    median_scores[i], 0, # TODO -> fix and place self.cooperating_rating[i] #self.cooperating_rating[i],
-                    median_wins[i], self.initial_cooperation_rate[i],
+                    self.ranking.index(player), # rank
+                    str(self.players[player]), # name
+                    median_scores[player], # median score
+                    self.cooperating_rating[player], # cooperation rating
+                    median_wins[player], # median wins
+                    self.initial_cooperation_rate[player], # initial cooperation rate
                     # then 4 state probabilities and 4 to-C probabilities
-                    *state_prob[i], *state_to_C_prob[i]
+                    *state_prob[player],
+                    *state_to_C_prob[player]
                 ]
             )
         return summary
@@ -1266,7 +1312,11 @@ class ThreeResultSet(ResultSet):
                     vec = []
                     if iters[3] is not None:
                         for r in iters[3]:
-                            idx = (i,j,k,r)
+                            # base_key is (i, j, k, r)
+                            base_key = (i, j, k, r)
+
+                            # reorder according to key_order = [3,0,1,2]
+                            idx = tuple(base_key[pos] for pos in key_order)
                             if idx in series.index:
                                 vec.append(series.loc[idx])
                             else:
