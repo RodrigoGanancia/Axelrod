@@ -1,4 +1,3 @@
-import axelrod as axl
 from axelrod.strategies import (
     Cooperator,
     Defector,
@@ -20,15 +19,16 @@ from axelrod.strategies import (
     ToughGrudger,
 ) 
 from axelrod.game import DefaultThreePlayerGame
-
+from axelrod.tournament import ThreePlayerTournament
 # players
+#players = (Cooperator(), Defector(), ToughTifForTat())
 players = (Cooperator(), SoftTifForTat(), ToughTifForTat(), Defector(), ToughFoolMeOnce(), 
            SoftFoolMeOnce(), BackStabber(), DoubleCrosser(), ToughGradualKiller(), SoftGradualKiller(),
            AntiTitForTat(), GoByMajority5(), GoByMajority40(), SoftTitFor2Tats(), ToughTitFor2Tats(),
            SuperToughTitFor2Tats(), SoftGrudger3p(), ToughGrudger())
 
 # build and run 3p tournament
-tournament = axl.Tournament(
+tournament = ThreePlayerTournament(
     players             = players,
     turns               = 10,     # 10 turns per match
     repetitions         = 5,      # 5 independent repeats

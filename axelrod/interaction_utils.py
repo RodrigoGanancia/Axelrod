@@ -287,3 +287,112 @@ def string_to_interactions(string):
         p2action = Action.from_char(interactions_list.pop(0))
         interactions.append((p1action, p2action))
     return interactions
+
+###########################################################################
+############################ 3 PLAYER VARIANTS ############################
+###########################################################################
+
+def compute_scores_3p(interactions, game):
+    return [game.score(turn) for turn in interactions]
+
+def compute_final_score_3p(interactions, game=None):
+    scores = compute_scores_3p(interactions, game)
+    if len(scores) == 0:
+        return None
+    final_score = tuple(
+        sum([score[player_index] for score in scores])
+        for player_index in [0, 1, 2]
+    )
+    return final_score
+
+def compute_final_score_per_turn_3p(interactions, game=None):
+    scores = compute_scores_3p(interactions, game)
+    num_turns = len(interactions)
+
+    if len(scores) == 0:
+        return None
+
+    final_score_per_turn = tuple(
+        sum([score[player_index] for score in scores]) / num_turns
+        for player_index in [0, 1, 2]
+    )
+    return final_score_per_turn
+    
+def compute_cooperations_3p(interactions):
+    """Returns the count of cooperations by each player for a set of
+    interactions"""
+    if len(interactions) == 0:
+        return None
+
+    cooperation = tuple(
+        sum([play[player_index] == C for play in interactions])
+        for player_index in [0, 1, 2]
+    )
+    return cooperation
+
+def compute_state_distribution_3p(interactions):
+    if not interactions:
+        return None
+    return Counter(interactions)
+    
+    
+def compute_normalised_state_distribution_3p(interactions):
+    if not interactions:
+        return None
+
+    interactions_count = Counter(interactions)
+    total = sum(interactions_count.values(), 0)
+
+    normalised_count = Counter(
+        {key: value / total for key, value in interactions_count.items()}
+    )
+    return normalised_count
+    
+    
+def compute_winner_index_3p(interactions, game=None):
+    """Returns the index of the winner of the Match"""
+    scores = compute_final_score_3p(interactions, game)
+
+    if scores is not None:
+        if scores[0] == scores[1] == scores[2]:
+            return False
+        return max([0, 1, 2], key=lambda i: scores[i])
+    return None
+
+def compute_state_to_action_distribution_3p(interactions):
+    """
+    Returns a list (for each player) of counts of each state to action pair
+    for a set of interactions. A state to action pair is of the form:
+
+    ((C, D, C), C)
+
+    Implying that from a state of (C, D, C) (the first player having played C,
+    the second playing D and the third playing C) the player in question then
+    played C.
+
+    Parameters
+    ----------
+    interactions : list of tuples
+        A list containing the interactions of the match as shown at the top of
+        this file.
+
+    Returns
+    ----------
+    state_to_C_distributions : List of Counter Object
+        List of Counter objects where the keys are the states and actions and
+        the values the counts. The first/second/third Counter corresponds to
+        the first/second/third player.
+    """
+    if not interactions:
+        return None
+
+    distributions = [
+        Counter(
+            [
+                (state, outcome[j])
+                for state, outcome in zip(interactions, interactions[1:])
+            ]
+        )
+        for j in range(3)
+    ]
+    return distributions

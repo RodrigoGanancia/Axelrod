@@ -870,7 +870,7 @@ class ResultSet:
             zip(
                 self.players,
                 median_scores,
-                #self.cooperating_rating,
+                self.cooperating_rating,
                 median_wins,
                 self.initial_cooperation_rate,
                 original_index,
@@ -917,11 +917,21 @@ class ThreeResultSet(ResultSet):
         # 2. Sum per player × (opp1, opp2)
         groups = ['Player index', 'Opponent1 index', 'Opponent2 index']
         sum_cols = ['Cooperation count',
-                    'CC count', 'CD count', 'DC count', 'DD count',
-                    'CC to C count', 'CC to D count',
-                    'CD to C count', 'CD to D count',
-                    'DC to C count', 'DC to D count',
-                    'DD to C count', 'DD to D count',
+                    "CCC count", "CCD count", "CDC count", "CDD count",
+                    "DCC count", "DCD count", "DDC count", "DDD count",
+                    "CCC to C count", "CCC to D count",
+                    "CCD to C count", "CCD to D count",
+                    "CDC to C count", "CDC to D count",
+                    "CDD to C count", "CDD to D count",
+                    "DCC to C count", "DCC to D count",
+                    "DCD to C count", "DCD to D count",
+                    "DDC to C count", "DDC to D count",
+                    "DDD to C count", "DDD to D count",
+                    #'CC count', 'CD count', 'DC count', 'DD count',
+                    #'CC to C count', 'CC to D count',
+                    #'CD to C count', 'CD to D count',
+                    #'DC to C count', 'DC to D count',
+                    #'DD to C count', 'DD to D count',
                     'Good partner']
         sum_per_player_opponent = df.groupby(groups)[sum_cols].sum()
         
@@ -945,7 +955,6 @@ class ThreeResultSet(ResultSet):
 
         # 6. Interaction counts per player (for normalization)
         interactions_count = df.groupby('Player index')['Player index'].count()
-
         return (
             mean_per_reps,
             sum_per_player_opponent,
@@ -1008,6 +1017,7 @@ class ThreeResultSet(ResultSet):
         ]
         #print("Scores: ", self.scores)
         self.normalised_scores = self.scores
+        #print(f"Normalised scores: {self.normalised_scores}")
 
         # --- Normalised scores per rep
         # self.normalised_scores = [
@@ -1030,11 +1040,19 @@ class ThreeResultSet(ResultSet):
                 for i in range(P)]
 
         # State distributions
+        # Counter({(C,C): get_sum(i,j,k,'CC count'),
+            #          (C,D): get_sum(i,j,k,'CD count'),
+            #          (D,C): get_sum(i,j,k,'DC count'),
+            #          (D,D): get_sum(i,j,k,'DD count')})
         self.state_distribution = [ [ [
-            Counter({(C,C): get_sum(i,j,k,'CC count'),
-                     (C,D): get_sum(i,j,k,'CD count'),
-                     (D,C): get_sum(i,j,k,'DC count'),
-                     (D,D): get_sum(i,j,k,'DD count')})
+            Counter({(C,C,C): get_sum(i,j,k,'CCC count'),
+                    (C,C,D): get_sum(i,j,k,'CCD count'),
+                    (C,D,C): get_sum(i,j,k,'CDC count'),
+                    (C,D,D): get_sum(i,j,k,'CDD count'),
+                    (D,C,C): get_sum(i,j,k,'DCC count'),
+                    (D,C,D): get_sum(i,j,k,'DCD count'),
+                    (D,D,C): get_sum(i,j,k,'DDC count'),
+                    (D,D,D): get_sum(i,j,k,'DDD count')})
             for k in range(P)] for j in range(P)] for i in range(P)]
 
         # Normalised state distributions
@@ -1044,7 +1062,7 @@ class ThreeResultSet(ResultSet):
             for j in range(P):
                 row_j = []
                 for k in range(P):
-                    sd = self.state_distribution[i][j][k]  # <-- this is a Counter
+                    sd = self.state_distribution[i][j][k]  # <-- Counter
                     total = sum(sd.values())
                     if total > 0:
                         # build normalized Counter(state → probability)
@@ -1065,17 +1083,25 @@ class ThreeResultSet(ResultSet):
                 opp_list = []
                 for k in range(P):
                     counter = Counter()
-                    # For each possible state, e.g. (C,C), look up counts
-                    for state, prefix in [((C, C), 'CC'), ((C, D), 'CD'),
-                                          ((D, C), 'DC'), ((D, D), 'DD')]:
+                    # For each possible state (C,C,C), ..., look up counts
+                    for (triple, labels) in [
+                        ((C,C,C), ("CCC to C count", "CCC to D count")),
+                        ((C,C,D), ("CCD to C count", "CCD to D count")),
+                        ((C,D,C), ("CDC to C count", "CDC to D count")),
+                        ((C,D,D), ("CDD to C count", "CDD to D count")),
+                        ((D,C,C), ("DCC to C count", "DCC to D count")),
+                        ((D,C,D), ("DCD to C count", "DCD to D count")),
+                        ((D,D,C), ("DDC to C count", "DDC to D count")),
+                        ((D,D,D), ("DDD to C count", "DDD to D count")),
+                    ]:
                         # Count of transitions from this state to C
-                        c_count = get_sum(i, j, k, f"{prefix} to C count")
+                        c_count = get_sum(i, j, k, labels[0])
                         # Count of transitions from this state to D
-                        d_count = get_sum(i, j, k, f"{prefix} to D count")
+                        d_count = get_sum(i, j, k, labels[1])
                         if c_count > 0:
-                            counter[(state, C)] = c_count
+                            counter[(triple, C)] = c_count
                         if d_count > 0:
-                            counter[(state, D)] = d_count
+                            counter[(triple, D)] = d_count
                     opp_list.append(counter)
                 player_list.append(opp_list)
             self.state_to_action_distribution.append(player_list)
@@ -1176,6 +1202,7 @@ class ThreeResultSet(ResultSet):
         ]
         for i in range(P)
         ]
+        #print("Wins: ", self.wins)
         
         self.match_lengths_3D = [
             [
@@ -1215,7 +1242,6 @@ class ThreeResultSet(ResultSet):
         #print("Wins: ", self.wins)
         
         
-        
     def summarise(self):
         P = self.num_players
         R = self.repetitions
@@ -1224,36 +1250,62 @@ class ThreeResultSet(ResultSet):
             "Player",
             ["Rank","Name","Median_score","Cooperation_rating",
              "Wins","Initial_C_rate","Original_index",
-             "CC_rate","CD_rate","DC_rate","DD_rate",
-             "CC_to_C_rate","CD_to_C_rate","DC_to_C_rate","DD_to_C_rate"]
+             "CCC_rate","CCD_rate","CDC_rate","CDD_rate",
+             "DCC_rate","DCD_rate","DDC_rate","DDD_rate",
+             "CCC_to_C_rate","CCC_to_D_rate", 
+             "CCD_to_C_rate","CCD_to_D_rate",
+             "CDC_to_C_rate","CDC_to_D_rate",
+             "CDD_to_C_rate","CDD_to_D_rate",
+             "DCC_to_C_rate","DCC_to_D_rate",
+             "DCD_to_C_rate","DCD_to_D_rate",
+             "DDC_to_C_rate","DDC_to_D_rate",
+             "DDD_to_C_rate","DDD_to_D_rate",  
+            ] 
+             #"CC_rate","CD_rate","DC_rate","DD_rate",
+             #"CC_to_C_rate","CD_to_C_rate","DC_to_C_rate","DD_to_C_rate"]
         )
         
         # 1. Payoff ranking and median scores reuse parent logic
         median_scores = list(map(np.nanmedian, self.normalised_scores))
         # wins should already be set
         median_wins   = list(map(np.nanmedian, self.wins))
+        original_index = [index for index, _player in enumerate(self.players)]
         #print("Median wins: ", median_wins)
 
         # 2. Build state_prob for 3p by summing over all pairs (j,k)
-        states = [(C,C),(C,D),(D,C),(D,D)]
+        states = [
+            (C, C, C),
+            (C, C, D),
+            (C, D, C),
+            (C, D, D),
+            (D, C, C),
+            (D, C, D),
+            (D, D, C),
+            (D, D, D),
+        ]
         state_prob = []
         for i in range(P):
-            # aggregate across all opponent pairs j,k != i
-            counts = {state: 0 for state in states}
-            total = 0
+        # initialize an aggregator for each of the eight triple-states
+            counts = { triple: 0 for triple in states }
+            total = 0.0
+        # sum over all ordered pairs (j,k) with j != i and k != i
             for j in range(P):
                 for k in range(P):
-                    if j==i or k==i: continue
+                    if j == i or k == i:
+                        continue
+                    # ctr is a Counter of shape Counter({(C,C,C): p₁, (C,C,D): p₂, …})
                     ctr = self.normalised_state_distribution[i][j][k]
-                    for state in states:
-                        val = ctr.get(state, 0)
-                        counts[state] += val
+                    for triple in states:
+                        val = ctr.get(triple, 0.0)
+                        counts[triple] += val
                         total += val
-            # normalize
+
             if total > 0:
-                state_prob.append([counts[s]/total for s in states])
+                # normalize so that the eight sums add up to 1
+                state_prob.append([counts[triple] / total for triple in states])
             else:
-                state_prob.append([0]*4)
+                # if no interactions, we just give 0 for each triple
+                state_prob.append([0.0] * 8)
 
         # 3. Build state_to_C_prob similarly by averaging P(C|state) across pairs
         state_to_C_prob = []
@@ -1271,6 +1323,22 @@ class ThreeResultSet(ResultSet):
                         count += 1
                 probs.append(sum_p/count if count else 0)
             state_to_C_prob.append(probs)
+            
+        state_to_D_prob = []
+        for i in range(P):
+            probs = []
+            for state in states:
+                sum_p = 0
+                count = 0
+                for j in range(P):
+                    for k in range(P):
+                        if j==i or k==i: continue
+                        raw = self.normalised_state_to_action_distribution[i][j][k]
+                        p_d = raw.get((state, D), 0)
+                        sum_p += p_d
+                        count += 1
+                probs.append(sum_p/count if count else 0)
+            state_to_D_prob.append(probs)
 
         # 4. Build summary rows
         summary = []
@@ -1284,9 +1352,11 @@ class ThreeResultSet(ResultSet):
                     self.cooperating_rating[player], # cooperation rating
                     median_wins[player], # median wins
                     self.initial_cooperation_rate[player], # initial cooperation rate
+                    original_index[player],
                     # then 4 state probabilities and 4 to-C probabilities
                     *state_prob[player],
-                    *state_to_C_prob[player]
+                    *state_to_C_prob[player],
+                    *state_to_D_prob[player]  # state to D probabilities
                 ]
             )
         return summary

@@ -209,6 +209,7 @@ class Tournament(object):
         file_obj = None
         writer = None
         if self.filename is not None:
+            print(f"Writing results to {self.filename}")
             file_obj = open(self.filename, "w")
             writer = csv.writer(file_obj, lineterminator="\n")
             if self.group_size == 2:
@@ -313,7 +314,7 @@ class Tournament(object):
     def _2p_write_interactions_to_file(self, index_pair, interactions, writer, players):
         repetition = 0
         for interaction, results in interactions:
-
+            print(f"Results: {results}")    
             if results is not None:
                 (
                     scores,
@@ -374,10 +375,13 @@ class Tournament(object):
     
     def _3p_write_interactions_to_file(self, index_pair, interactions, writer, players):
         repetition = 0
+        # history -> list with triples (C,D,C), ...
         for history, metrics in interactions:
             if metrics is None:
                 repetition += 1
                 continue
+            #print(f"Writing interaction {self.num_interactions} for {index_pair} with history {history}")
+            #print(f"Metrics: {metrics}")
             final_scores = metrics["final_scores"]
             for m, player_index in enumerate(index_pair):
                 others = [i for i in index_pair if i != player_index]
@@ -636,6 +640,237 @@ class Tournament(object):
         return results
 
 
+class ThreePlayerTournament(Tournament):
+    """
+    A tournament class for three-player tournaments.
+    Inherits from Tournament and overrides relevant methods and attributes.
+    """
+
+    def __init__(
+        self,
+        players: List[Player],
+        name: str = "axelrod",
+        game: Game = None,
+        turns: Optional[int] = None,
+        prob_end: Optional[float] = None,
+        repetitions: int = 10,
+        noise: float = 0,
+        edges: Optional[List[Tuple]] = None,
+        match_attributes: Optional[dict] = None,
+        seed: Optional[int] = None,
+        group_size: int = 2
+    ) -> None:
+        super().__init__(
+            players=players,
+            name=name,
+            game=game,
+            turns=turns,
+            prob_end=prob_end,
+            repetitions=repetitions,
+            noise=noise,
+            edges=edges,
+            match_attributes=match_attributes,
+            seed=seed,
+            group_size=group_size
+        )
+        self.match_class = ThreeMatch
+        self.group_size = 3
+        if self.edges is None:
+            self.edges = list(complete_3hypergraph(self.players))
+
+    def _get_file_objects(self, build_results=True):
+        file_obj = None
+        writer = None
+        if self.filename is not None:
+            file_obj = open(self.filename, "w")
+            writer = csv.writer(file_obj, lineterminator="\n")
+
+            header = [
+                    "Interaction index",
+                    "Player index",
+                    "Opponent1 index",
+                    "Opponent2 index",
+                    "Repetition",
+                    "Player name",
+                    "Opponent1 name",
+                    "Opponent2 name",
+                    "History",
+            ]
+            if build_results:
+                header.extend(
+                    [
+                        "Score",
+                        "Score difference",
+                        "Turns",
+                        "Score per turn",
+                        "Score difference per turn",
+                        "Win",
+                        "Initial cooperation",
+                        "Cooperation count",
+                        #"CC count",
+                        #"CD count",
+                        #"DC count",
+                        #"DD count",
+                        "CCC count",
+                        "CCD count",
+                        "CDC count",
+                        "CDD count",
+                        "DCC count",
+                        "DCD count",
+                        "DDC count",
+                        "DDD count",
+                        "CCC to C count",
+                        "CCC to D count",
+                        "CCD to C count",
+                        "CCD to D count",
+                        "CDC to C count",
+                        "CDC to D count",
+                        "CDD to C count",
+                        "CDD to D count",
+                        "DCC to C count",
+                        "DCC to D count",
+                        "DCD to C count",
+                        "DCD to D count",
+                        "DDC to C count",
+                        "DDC to D count",
+                        "DDD to C count",
+                        "DDD to D count",
+                        "Good partner"
+                    ]
+                )
+            writer.writerow(header)
+        return file_obj, writer
+    
+    def _write_interactions_to_file(self, results, writer):
+        for index_pair, interactions in results.items():
+            self._3p_write_interactions_to_file(index_pair, interactions, writer, self.players)
+
+    
+    def _calculate_results(self, interactions):
+        results = []
+
+        scores = iu.compute_final_score_3p(interactions, self.game)
+        results.append(scores)
+        
+        score_diffs = (
+            scores[0] - scores[1],
+            scores[1] - scores[0],
+            scores[0] - scores[2],
+            scores[2] - scores[0], 
+            scores[1] - scores[2],
+            scores[2] - scores[1]
+        )
+        results.append(score_diffs)
+        
+        turns = len(interactions)
+        results.append(turns)
+        
+        score_per_turns = iu.compute_final_score_per_turn_3p(
+            interactions, self.game
+        )
+        results.append(score_per_turns)
+        
+        score_diffs_per_turns = (
+            score_diffs[0] / turns, score_diffs[1] / turns, score_diffs[2] / turns
+        )
+        results.append(score_diffs_per_turns)
+        
+        initial_coops = tuple(
+            map(bool, iu.compute_cooperations_3p(interactions[:1]))
+        )
+        results.append(initial_coops)
+        
+        cooperations = iu.compute_cooperations_3p(interactions)
+        results.append(cooperations)
+        
+        state_distribution = iu.compute_state_distribution_3p(interactions)
+        results.append(state_distribution)
+        
+        state_to_action_distributions = iu.compute_state_to_action_distribution_3p(
+            interactions
+        )
+        results.append(state_to_action_distributions)
+        
+        winner_index = iu.compute_winner_index_3p(interactions, self.game)
+        results.append(winner_index)
+        
+        return results
+    
+    
+    def _3p_write_interactions_to_file(self, index_pair, interactions, writer, players):
+        repetition = 0
+        # history -> list with triples (C,D,C), ...
+        for history, metrics in interactions:
+            cols = 0
+            #if metrics is None:
+            #    repetition += 1
+            #    continue
+            if metrics is not None:
+                (
+                    scores,
+                    score_diffs,
+                    turns,
+                    score_per_turns,
+                    score_diffs_per_turns,
+                    initial_cooperation,
+                    cooperations,
+                    # {(C,C,C): x, (C,C,D): y, ...}
+                    state_distribution,
+                    # {(C, D, D), C): 8, ...}
+                    state_to_action_distributions,
+                    winner_index,
+                ) = metrics
+            
+            for idx, player_index in enumerate(index_pair):
+                others = [i for i in index_pair if i != player_index]
+                row = [
+                    self.num_interactions,
+                    player_index, # player index
+                    others[0], # opponent1 index
+                    others[1], # opponent2 index
+                    repetition, # repetition
+                    str(self.players[player_index]), # player name
+                    str(self.players[others[0]]), # opponent1 name
+                    str(self.players[others[1]]), # opponent2 name
+                    self.custom_3p_history_string(history, idx), # history
+                ]
+                # TODO -> remove cols
+                cols = len(row)
+                
+                if metrics is not None:
+                    row.append(scores[idx])
+                    row.append(score_diffs[idx])
+                    row.append(turns)
+                    row.append(score_per_turns[idx])
+                    row.append(score_diffs_per_turns[idx])
+                    row.append(int(winner_index == idx))
+                    row.append(initial_cooperation[idx])
+                    row.append(cooperations[idx])
+                    cols += 8
+                    states = [(C, C, C), (C, C, D), (C, D, C), (C, D, D),
+                             (D, C, C), (D, C, D), (D, D, C), (D, D, D)]
+                    
+                    counter_for_myself = state_to_action_distributions[idx]
+                    for state in states:
+                        # (CCC), x
+                        row.append(state_distribution[state])
+                        cols += 1
+                    for state in states:
+                        # state action counts
+                        row.append(counter_for_myself.get((state, C), 0))
+                        row.append(counter_for_myself.get((state, D), 0))
+                        cols += 2
+                        
+                    # TODO -> GOOD PARTNER
+                    row.append(0)
+                    cols += 1
+                    #print(f"Writing row with {cols} columns: {row}")
+                writer.writerow(row)
+
+                self.num_interactions += 1
+            repetition += 1
+                    
+                    
 def _close_objects(*objs):
     """If the objects have a `close` method, closes them."""
     for obj in objs:
