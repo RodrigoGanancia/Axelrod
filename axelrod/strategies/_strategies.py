@@ -114,7 +114,7 @@ from .finite_state_machines import (  # pylint: disable=unused-import
     EvolvableFSMPlayer,
     FSMPlayer,
 )
-from .forgiver import Forgiver, ForgivingTitForTat
+from .forgiver import Forgiver, ForgivingTitForTat, SoftForgiver, ToughForgiver
 from .gambler import (
     PSOGambler1_1_1,
     PSOGambler2_2_2,
@@ -163,6 +163,10 @@ from .hunter import (
     EventualCycleHunter,
     MathConstantHunter,
     RandomHunter,
+    SoftDefectorHunter,
+    ToughDefectorHunter,
+    SoftCooperatorHunter,
+    ToughCooperatorHunter,
 )
 from .inverse import Inverse
 from .lookerup import (
@@ -176,7 +180,7 @@ from .lookerup import (  # pylint: disable=unused-import
     LookerUp,
 )
 
-from .mathematicalconstants import Golden, Pi, e
+from .mathematicalconstants import Golden, Pi, e, SoftGolden, SoftPi, SoftE, ToughGolden, ToughPi, ToughE
 from .memoryone import (
     GTFT,
     ALLCorALLD,
@@ -477,11 +481,17 @@ all_strategies = [
     ShortMem,
     SlowTitForTwoTats2,
     SneakyTitForTat,
+    SoftCooperatorHunter,
+    SoftDefectorHunter,
+    SoftE,
     SoftFoolMeOnce,
+    SoftForgiver,
+    SoftGolden,
     SoftGradualKiller,
     SoftGrudger,
     SoftGrudger3p,
     SoftJoss,
+    SoftPi,
     SoftTifForTat,
     SoftTitFor2Tats,
     SolutionB1,
@@ -501,9 +511,15 @@ all_strategies = [
     Thumper,
     TitFor2Tats,
     TitForTat,
+    ToughCooperatorHunter,
+    ToughDefectorHunter,
+    ToughE,
     ToughFoolMeOnce,
+    ToughForgiver,
+    ToughGolden,
     ToughGradualKiller,
     ToughGrudger,
+    ToughPi,
     ToughTifForTat,
     ToughTitFor2Tats,
     TrickyCooperator,

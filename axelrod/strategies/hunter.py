@@ -34,7 +34,6 @@ class DefectorHunter(Player):
             return D
         return C
 
-
 class CooperatorHunter(Player):
     """A player who hunts for cooperators.
 
@@ -258,4 +257,68 @@ class RandomHunter(Player):
                 [abs(p - 0.5) < 0.25 for p in probabilities]
             ):
                 return D
+        return C
+    
+class SoftDefectorHunter(Player):
+    name = "Soft Defector Hunter"
+    classifier = {
+        "memory_depth": float("inf"),  # Long memory
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        if len(self.history) >= 4 and all(len(op.history) == op.defections for op in opponents):
+            return D
+        return C
+    
+class ToughDefectorHunter(Player):
+    name = "Tough Defector Hunter"
+    classifier = {
+        "memory_depth": float("inf"),  # Long memory
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        if len(self.history) >= 4 and any(len(op.history) == op.defections for op in opponents):
+            return D
+        return C
+    
+class SoftCooperatorHunter(Player):
+    name = "Soft Cooperator Hunter"
+    classifier = {
+        "memory_depth": float("inf"),  # Long memory
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        if len(self.history) >= 4 and all(len(op.history) == op.cooperations for op in opponents):
+            return D
+        return C
+    
+class ToughCooperatorHunter(Player):
+    name = "Tough Cooperator Hunter"
+    classifier = {
+        "memory_depth": float("inf"),  # Long memory
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        if len(self.history) >= 4 and any(len(op.history) == op.cooperations for op in opponents):
+            return D
         return C

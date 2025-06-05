@@ -1,3 +1,4 @@
+from typing import List
 from axelrod.action import Action
 from axelrod.player import Player
 
@@ -50,3 +51,17 @@ class VeryBad(Player):
 
         else:
             return opponent.history[-1]
+        
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        total_moves = sum(len(op.history) for op in opponents)
+    
+        if total_moves < 3 * len(opponents):
+            return C
+    
+        total_cooperations = sum(op.cooperations for op in opponents)
+        cooperation_probability = total_cooperations / total_moves
+    
+        if cooperation_probability > 0.5:
+            return C
+        else:
+            return D

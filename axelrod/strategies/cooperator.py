@@ -72,6 +72,15 @@ class TrickyCooperator(Player):
         ):
             return D
         return C
+    
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        """Defect if all opponents have cooperated enough recently."""
+        if (
+            self._has_played_enough_rounds_to_be_tricky()
+            and all(self._opponents_has_cooperated_enough_to_be_tricky(op) for op in opponents)
+        ):
+            return D
+        return C
 
     def _has_played_enough_rounds_to_be_tricky(self):
         return len(self.history) >= self._min_history_required_to_try_trickiness

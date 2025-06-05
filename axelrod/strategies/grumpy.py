@@ -1,3 +1,4 @@
+from typing import List
 from axelrod.action import Action
 from axelrod.player import Player
 
@@ -58,6 +59,23 @@ class Grumpy(Player):
         """
 
         grumpiness = opponent.defections - opponent.cooperations
+
+        if self.state == "Nice":
+            if grumpiness > self.grumpy_threshold:
+                self.state = "Grumpy"
+                return D
+            return C
+
+        if self.state == "Grumpy":
+            if grumpiness < self.nice_threshold:
+                self.state = "Nice"
+                return C
+            return D
+        
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        total_defections = sum(opponent.defections for opponent in opponents)
+        total_cooperations = sum(opponent.cooperations for opponent in opponents)
+        grumpiness = total_defections - total_cooperations
 
         if self.state == "Nice":
             if grumpiness > self.grumpy_threshold:

@@ -1,3 +1,4 @@
+from typing import List
 from axelrod import Player
 from axelrod.action import Action
 
@@ -46,3 +47,31 @@ class ShortMem(Player):
             return D
         else:
             return opponent.history[-1]
+
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        if len(self.history) < 10:
+            return C
+
+        recent_last_actions = []
+        C_counts = 0
+        D_counts = 0
+
+        # Gather data from last 10 rounds of each opponent
+        for opponent in opponents:
+            recent = opponent.history[-10:]
+            C_counts += recent.count(C)
+            D_counts += recent.count(D)
+            recent_last_actions.append(opponent.history[-1])
+
+        threshold = int(0.3 * (C_counts + D_counts))  # 30% difference threshold
+
+        if C_counts - D_counts >= threshold:
+            return C
+        elif D_counts - C_counts >= threshold:
+            return D
+        else:
+            # Tough Tit-for-Tat fallback: follow majority of opponents' last actions
+            if recent_last_actions.count(D) >= recent_last_actions.count(C):
+                return D
+            else:
+                return C

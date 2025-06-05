@@ -1,3 +1,4 @@
+from typing import List
 from axelrod.action import Action
 from axelrod.player import Player
 
@@ -63,3 +64,45 @@ class ForgivingTitForTat(Player):
         if opponent.defections > len(opponent.history) / 10:
             return opponent.history[-1]
         return C
+
+class SoftForgiver(Player):
+    """
+    Cooperates unless BOTH opponents have defected more than 10% of the time.
+    """
+
+    name = "Soft Forgiver"
+    classifier = {
+        "memory_depth": float("inf"),
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        def defect_rate(opponent: Player) -> float:
+            return opponent.defections / len(opponent.history) if opponent.history else 0.0
+        
+        return D if all(defect_rate(opp) > 0.10 for opp in opponents) else C
+    
+class ToughForgiver(Player):
+    """
+    Cooperates unless one of the opponents have defected more than 10% of the time.
+    """
+
+    name = "Tough Forgiver"
+    classifier = {
+        "memory_depth": float("inf"),
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        def defect_rate(opponent: Player) -> float:
+            return opponent.defections / len(opponent.history) if opponent.history else 0.0
+        
+        return D if any(defect_rate(opp) > 0.10 for opp in opponents) else C

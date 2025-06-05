@@ -67,3 +67,13 @@ class TrickyDefector(Player):
         ):
             return C
         return D
+    
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        """Cooperate if all opponents have cooperated at least once and defected
+        for the last 3 turns. Otherwise defect."""
+        if all(
+            op.cooperations > 0 and op.history[-3:] == [D] * 3
+            for op in opponents
+        ):
+            return C
+        return D
