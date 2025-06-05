@@ -1309,56 +1309,56 @@ class ThreeResultSet(ResultSet):
 
         # 3. Build state_to_C_prob similarly by averaging P(C|state) across pairs
         state_to_C_prob = []
-        for i in range(P):
-            probs = []
-            for state in states:
-                sum_p = 0
-                count = 0
-                for j in range(P):
-                    for k in range(P):
-                        if j==i or k==i: continue
-                        raw = self.normalised_state_to_action_distribution[i][j][k]
-                        p_c = raw.get((state, C), 0)
-                        sum_p += p_c
-                        count += 1
-                probs.append(sum_p/count if count else 0)
-            state_to_C_prob.append(probs)
-            
         state_to_D_prob = []
         for i in range(P):
-            probs = []
-            for state in states:
-                sum_p = 0
+            probs_C_lst, probs_D_lst = [], []
+            for triple in states:
+                sum_C = 0
+                sum_D = 0
                 count = 0
                 for j in range(P):
                     for k in range(P):
                         if j==i or k==i: continue
-                        raw = self.normalised_state_to_action_distribution[i][j][k]
-                        p_d = raw.get((state, D), 0)
-                        sum_p += p_d
+                        
+                        raw = self.state_to_action_distribution[i][j][k]
+                        sum_C += raw.get((triple, C), 0)
+                        sum_D += raw.get((triple, D), 0)
                         count += 1
-                probs.append(sum_p/count if count else 0)
-            state_to_D_prob.append(probs)
-
+                        
+                # normalize
+                total_for_state = sum_C + sum_D
+                if total_for_state > 0:
+                    probs_C = sum_C / total_for_state
+                    probs_D = sum_D / total_for_state
+                else:
+                    probs_C = 0
+                    probs_D = 0
+                probs_C_lst.append(probs_C)
+                probs_D_lst.append(probs_D)
+            state_to_C_prob.append(probs_C_lst)
+            state_to_D_prob.append(probs_D_lst)
+            
         # 4. Build summary rows
         summary = []
         for player in range(P):
-            summary.append(
-                [
-                    # Rank, Name, Median_score, Cooperation_rating, Wins, Initial_C_rate
-                    self.ranking.index(player), # rank
-                    str(self.players[player]), # name
-                    median_scores[player], # median score
-                    self.cooperating_rating[player], # cooperation rating
-                    median_wins[player], # median wins
-                    self.initial_cooperation_rate[player], # initial cooperation rate
-                    original_index[player],
-                    # then 4 state probabilities and 4 to-C probabilities
-                    *state_prob[player],
-                    *state_to_C_prob[player],
-                    *state_to_D_prob[player]  # state to D probabilities
-                ]
-            )
+            row = [
+                # Rank, Name, Median_score, Cooperation_rating, Wins, Initial_C_rate, Original_index
+                self.ranking.index(player),
+                str(self.players[player]),
+                median_scores[player],
+                self.cooperating_rating[player],
+                median_wins[player],
+                self.initial_cooperation_rate[player],
+                original_index[player],
+            ]
+            
+            row.extend(state_prob[player])  # state probs
+            # CCC to C, CCC to D, ...
+            for idx_state in range(len(states)):
+                row.append(state_to_C_prob[player][idx_state])
+                row.append(state_to_D_prob[player][idx_state])
+
+            summary.append(row)
         return summary
             
     
