@@ -12,6 +12,102 @@ from axelrod.player import Player
 C, D = Action.C, Action.D
 actions = (C, D)
 Transition = Tuple[int, Action, int, Action]
+TripleTransition = Tuple[int, Action, Action, int, Action]
+
+class Simple3PlayerFSM:
+    def __init__(self, transitions: Tuple[TripleTransition, ...], initial_state: int) -> None:
+        """
+        transitions: List of transitions in the form:
+        (current_state, opponent_1_action, opponent_2_action, next_state, own_action)
+        """
+        self._state = initial_state
+        self._state_transitions: Dict[Tuple[int, Action, Action], Tuple[int, Action]] = {
+            (cs, a1, a2): (ns, ao) for cs, a1, a2, ns, ao in transitions
+        }
+        self._raise_error_for_bad_input()
+
+    def _raise_error_for_bad_input(self):
+        states = set(cs for cs, *_ in self._state_transitions)
+        for state in states:
+            for a1 in (C, D):
+                for a2 in (C, D):
+                    if (state, a1, a2) not in self._state_transitions:
+                        raise ValueError(
+                            f"State {state} missing transition for opponent actions ({a1}, {a2})"
+                        )
+
+    @property
+    def state(self) -> int:
+        return self._state
+
+    @state.setter
+    def state(self, new_state: int):
+        self._state = new_state
+
+    def move(self, action1: Action, action2: Action) -> Action:
+        next_state, next_action = self._state_transitions[(self._state, action1, action2)]
+        self._state = next_state
+        return next_action
+
+
+class FSM3Player(Player):
+    """
+    Finite State Machine player for a 3-player Iterated Prisoner's Dilemma.
+    """
+
+    name = "3-Player FSM"
+
+    def __init__(
+        self,
+        transitions: Tuple[TripleTransition, ...] = ((1, C, C, 1, C), (1, C, D, 1, D), (1, D, C, 1, D), (1, D, D, 1, D)),
+        initial_state: int = 1,
+        initial_action: Action = C,
+    ) -> None:
+        super().__init__()
+        self.initial_state = initial_state
+        self.initial_action = initial_action
+        self.fsm = Simple3PlayerFSM(transitions, initial_state)
+
+    def strategy_multi(self, opponents: List[Player]) -> Action:
+        if len(self.history) == 0:
+            return self.initial_action
+        else:
+            action1 = opponents[0].history[-1]
+            action2 = opponents[1].history[-1]
+            return self.fsm.move(action1, action2)
+
+class Rodrigo(FSM3Player):
+    """Finite state machine player specified for 3 players
+
+    """
+
+    name = "Rodrigo"
+    classifier = {
+        "memory_depth": 2,
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+
+    def __init__(self) -> None:
+        transitions = (
+            (1, C, C, 1, D),
+            (1, C, D, 1, D),
+            (1, D, C, 1, D),
+            (1, D, D, 2, C),
+            (2, C, C, 1, D),
+            (2, C, D, 1, D),
+            (2, D, C, 1, D),
+            (2, D, D, 2, D),
+        )
+
+        super().__init__(
+            transitions=transitions, initial_state=1, initial_action=D
+        )
+
+
 
 
 class SimpleFSM(object):

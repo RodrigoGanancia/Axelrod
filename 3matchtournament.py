@@ -34,6 +34,7 @@ from axelrod.strategies import (
     ToughGolden,
     ToughPi,
     ToughE,
+    Rodrigo,
 ) 
 from axelrod.game import DefaultThreePlayerGame
 from axelrod.tournament import ThreePlayerTournament
@@ -45,7 +46,7 @@ players = (Cooperator(), SoftTifForTat(), ToughTifForTat(), Defector(), ToughFoo
            SuperToughTitFor2Tats(), SoftGrudger3p(), ToughGrudger(), ShortMem(), SoftForgiver(),
            ToughForgiver(), Grumpy(), VeryBad(), SoftDefectorHunter(), ToughDefectorHunter(),
            SoftCooperatorHunter(), ToughCooperatorHunter(), TrickyCooperator(), TrickyDefector(),
-           SoftGolden(), SoftPi(), SoftE(), ToughGolden(), ToughPi(), ToughE())
+           SoftGolden(), SoftPi(), SoftE(), ToughGolden(), ToughPi(), ToughE(), Rodrigo())
 
 # build and run 3p tournament
 tournament = ThreePlayerTournament(
