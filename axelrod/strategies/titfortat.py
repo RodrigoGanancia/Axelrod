@@ -1048,7 +1048,7 @@ class SoftTitFor2Tats(Player):
         """
         if not self.history:
             return C
-        if opponents[0].history[-2:] == [D, D] and opponents[0].history[-2:] == [D, D]:
+        if opponents[0].history[-2:] == [D, D] and opponents[1].history[-2:] == [D, D]:
             return D
         return C
     
@@ -1074,7 +1074,7 @@ class ToughTitFor2Tats(Player):
         """
         if not self.history:
             return C
-        if opponents[0].history[-2:] == [D, D] or opponents[0].history[-2:] == [D, D]:
+        if opponents[0].history[-2:] == [D, D] or opponents[1].history[-2:] == [D, D]:
             return D
         return C
     

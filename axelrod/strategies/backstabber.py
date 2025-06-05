@@ -70,7 +70,7 @@ class DoubleCrosser(Player):
     def strategy_multi(self, opponents: List[Player]) -> Action:
         """Actual strategy definition that determines player's action."""
         if _opponent_triggers_alt_strategy(opponents[0]) \
-            and _opponent_triggers_alt_strategy(opponents[0]):
+            and _opponent_triggers_alt_strategy(opponents[1]):
             return _alt_strategy_3(opponents)
         return _backstabber_strategy_3(opponents)
 
