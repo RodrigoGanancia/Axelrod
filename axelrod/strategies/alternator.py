@@ -1,5 +1,6 @@
 from axelrod.action import Action
 from axelrod.player import Player
+from typing import List
 
 C, D = Action.C, Action.D
 
@@ -25,6 +26,14 @@ class Alternator(Player):
     }
 
     def strategy(self, opponent: Player) -> Action:
+        """Actual strategy definition that determines player's action."""
+        if len(self.history) == 0:
+            return C
+        if self.history[-1] == C:
+            return D
+        return C
+    
+    def strategy_multi(self, opponents: List[Player]) -> Action:
         """Actual strategy definition that determines player's action."""
         if len(self.history) == 0:
             return C
