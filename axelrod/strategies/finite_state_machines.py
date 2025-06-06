@@ -76,12 +76,12 @@ class FSM3Player(Player):
             action2 = opponents[1].history[-1]
             return self.fsm.move(action1, action2)
 
-class Rodrigo(FSM3Player):
+class RodrigoDefector(FSM3Player):
     """Finite state machine player specified for 3 players
 
     """
 
-    name = "Rodrigo"
+    name = "Rodrigo Defector"
     classifier = {
         "memory_depth": 2,
         "stochastic": False,
@@ -105,6 +105,50 @@ class Rodrigo(FSM3Player):
 
         super().__init__(
             transitions=transitions, initial_state=1, initial_action=D
+        )
+
+
+class Rodrigo(FSM3Player):
+    """Finite state machine player specified for 3 players
+
+    """
+
+    name = "Rodrigo Grudger Killer"
+    classifier = {
+        "memory_depth": 2,
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+
+    def __init__(self) -> None:
+        transitions = (
+            (1, C, C, 1, C),
+            (1, C, D, 2, D),
+            (1, D, C, 2, D),
+            (1, D, D, 3, D),
+
+            (2, C, C, 1, D),
+            (2, C, D, 2, D),
+            (2, D, C, 2, D),
+            (2, D, D, 4, C),
+
+            (3, C, C, 3, D),
+            (3, C, D, 3, D),
+            (3, D, C, 3, D),
+            (3, D, D, 3, D),
+
+            (4, C, C, 2, D),
+            (4, C, D, 2, D),
+            (4, D, C, 2, D),
+            (4, D, D, 3, D),
+
+        )
+
+        super().__init__(
+            transitions=transitions, initial_state=1, initial_action=C
         )
 
 

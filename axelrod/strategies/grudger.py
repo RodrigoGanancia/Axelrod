@@ -476,7 +476,7 @@ class ToughGrudger(Player):
     - Vengeful: [Ashlock2009]_
     """
 
-    name = "Soft Grudger"
+    name = "Tough Grudger"
     classifier = {
         "memory_depth": float("inf"),
         "stochastic": False,
