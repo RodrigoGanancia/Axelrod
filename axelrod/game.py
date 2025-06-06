@@ -160,24 +160,36 @@ class ThreePlayerGame:
         return f"ThreePlayerGame({len(self.payoff_map)} entries)"
 
 
-# default payoff based on pairwise sum of scores
-def make_pairwise_sum_payoff_map(game, normalize=False):
-    payoff_map = {}
-    for a1 in (C,D):
-      for a2 in (C,D):
-        for a3 in (C,D):
-          s12,_ = game.scores[(a1,a2)]
-          s13,_ = game.scores[(a1,a3)]
-          s21,_ = game.scores[(a2,a1)]
-          s23,_ = game.scores[(a2,a3)]
-          s31,_ = game.scores[(a3,a1)]
-          s32,_ = game.scores[(a3,a2)]
-          t1, t2, t3 = s12+s13, s21+s23, s31+s32
-          if normalize:
-            t1/=2; t2/=2; t3/=2
-          payoff_map[(a1,a2,a3)] = (t1,t2,t3)
-    #print(f"Payoff map created: {payoff_map}")
-    return payoff_map
+# # default payoff based on pairwise sum of scores
+# def make_pairwise_sum_payoff_map(game, normalize=False):
+#     payoff_map = {}
+#     for a1 in (C,D):
+#       for a2 in (C,D):
+#         for a3 in (C,D):
+#           s12,_ = game.scores[(a1,a2)]
+#           s13,_ = game.scores[(a1,a3)]
+#           s21,_ = game.scores[(a2,a1)]
+#           s23,_ = game.scores[(a2,a3)]
+#           s31,_ = game.scores[(a3,a1)]
+#           s32,_ = game.scores[(a3,a2)]
+#           t1, t2, t3 = s12+s13, s21+s23, s31+s32
+#           if normalize:
+#             t1/=2; t2/=2; t3/=2
+#           payoff_map[(a1,a2,a3)] = (t1,t2,t3)
+#     #print(f"Payoff map created: {payoff_map}")
+#     return payoff_map
 
-DefaultThreePlayerGame = ThreePlayerGame(make_pairwise_sum_payoff_map(Game(), normalize=True))
+payoff_map = {
+    (C, C, C): (4.0, 4.0, 4.0),
+    (C, C, D): (2.0, 2.0, 6.0),
+    (C, D, C): (2.0, 6.0, 2.0),
+    (D, C, C): (6.0, 2.0, 2.0),
+    (C, D, D): (0.0, 2.5, 2.5),
+    (D, C, D): (2.5, 0.0, 2.5),
+    (D, D, C): (2.5, 2.5, 0.0),
+    (D, D, D): (1.0, 1.0, 1.0),
+}
+
+#DefaultThreePlayerGame = ThreePlayerGame(make_pairwise_sum_payoff_map(Game(), normalize=True))
+DefaultThreePlayerGame = ThreePlayerGame(payoff_map)
 DefaultGame = Game()

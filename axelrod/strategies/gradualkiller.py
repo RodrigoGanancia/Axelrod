@@ -54,6 +54,7 @@ class SoftGradualKiller(Player):
 
     # These are various properties for the strategy
     name = "Soft Gradual Killer"
+    short_name = "SGK"
     classifier = {
         "memory_depth": float("Inf"),
         "stochastic": False,
@@ -87,6 +88,7 @@ class ToughGradualKiller(Player):
 
     # These are various properties for the strategy
     name = "Tough Gradual Killer"
+    short_name = "TGK"
     classifier = {
         "memory_depth": float("Inf"),
         "stochastic": False,

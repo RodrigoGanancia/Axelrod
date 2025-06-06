@@ -18,6 +18,7 @@ class BackStabber(Player):
     """
 
     name = "BackStabber"
+    short_name = "BS"
     classifier = {
         "memory_depth": float("inf"),
         "stochastic": False,
@@ -52,6 +53,7 @@ class DoubleCrosser(Player):
     """
 
     name = "DoubleCrosser"
+    short_name = "DC"
     classifier = {
         "memory_depth": float("inf"),
         "stochastic": False,

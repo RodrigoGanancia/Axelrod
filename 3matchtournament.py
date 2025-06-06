@@ -88,10 +88,11 @@ def run_tournament(label, noise, prob_end, outdir):
 
 
 if __name__ == "__main__":
-    #run_tournament("standard", noise=0, prob_end=0, outdir="results/standard")
+    # standard
+    run_tournament("standard", noise=0, prob_end=0, outdir="results/standard")
     
     # early stop tournament
-    #run_tournament("earlystop", noise=0, prob_end=0.1, outdir="results/earlystop")
+    run_tournament("earlystop", noise=0, prob_end=0.1, outdir="results/earlystop")
     
     # noisy tournament
     run_tournament("noisy", noise=0.1, prob_end=0, outdir="results/noisy")

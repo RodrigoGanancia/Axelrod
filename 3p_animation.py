@@ -85,10 +85,12 @@ def animate_3p_match(screen, clock, players_triple):
     num_rows = 3
     cell_width  = SCREEN_WIDTH  // T
     cell_height = SCREEN_HEIGHT // num_rows
-    fonts_size = 24
+    #fonts_size = 24
+    fonts_size = 50
     font = pygame.font.SysFont(None, fonts_size)
-    score_font = pygame.font.SysFont(None, 20)
-    rendered_names = [font.render(str(p), True, TEXT_COLOR) for p in players_triple]
+    score_font = pygame.font.SysFont(None, 48)
+    #rendered_names = [font.render(str(p), True, TEXT_COLOR) for p in players_triple]
+    rendered_names = [font.render(p.short_name, True, TEXT_COLOR) for p in players_triple]
     
     cumulative_scores = []
     running = [0] * num_rows
@@ -123,8 +125,8 @@ def animate_3p_match(screen, clock, players_triple):
                 )
                 pygame.draw.rect(screen, color, rect)
 
-                name_surf = rendered_names[row]
-                screen.blit(name_surf, (t * cell_width + 4, row * cell_height + 4))
+                #name_surf = rendered_names[row]
+                #screen.blit(name_surf, (t * cell_width + 4, row * cell_height + 4))
                 
                 score_value = cumulative_scores[t][row]
                 # Format as integer if whole, else one decimal place:
@@ -134,13 +136,25 @@ def animate_3p_match(screen, clock, players_triple):
                     score_text = f"{score_value:.1f}"
                 score_surf = score_font.render(score_text, True, TEXT_COLOR)
                 # Position it near the top-right inside that cell, with 4px padding:
-                screen.blit(
-                    score_surf,
-                    (
-                        t * cell_width + cell_width - score_surf.get_width() - 4,
-                        row * cell_height + 4,
-                    ),
+                #screen.blit(
+                #    score_surf,
+                #    (
+                #        t * cell_width + cell_width - score_surf.get_width() - 4,
+                #        row * cell_height + 4,
+                #    ),
+                #)
+                
+                name_surf = rendered_names[row]
+                screen.blit(name_surf, (t * cell_width + 4,
+                                        row * cell_height + 4))
+
+                # compute where to place score under name
+                name_bottom = (row * cell_height + 4) + name_surf.get_height()
+                score_pos = (
+                    t * cell_width + 4,                 # same x offset as the name
+                    name_bottom + 4                     # 4 pixels below the bottom of the name
                 )
+                screen.blit(score_surf, score_pos)
 
         # update display and wait
         pygame.display.flip()

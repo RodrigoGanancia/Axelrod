@@ -120,6 +120,7 @@ class GoByMajority40(GoByMajority):
     """
 
     name = "Go By Majority 40"
+    short_name = "GBM40"
     classifier = copy.copy(GoByMajority.classifier)
     classifier["memory_depth"] = 40
 
@@ -171,6 +172,7 @@ class GoByMajority5(GoByMajority):
     """
 
     name = "Go By Majority 5"
+    short_name = "GBM5"
     classifier = copy.copy(GoByMajority.classifier)
     classifier["memory_depth"] = 5
 

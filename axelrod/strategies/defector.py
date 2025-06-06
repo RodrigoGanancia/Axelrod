@@ -16,6 +16,7 @@ class Defector(Player):
     """
 
     name = "Defector"
+    short_name = "Dfct"
     classifier = {
         "memory_depth": 0,
         "stochastic": False,

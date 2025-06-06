@@ -246,6 +246,7 @@ class AntiTitForTat(Player):
     """
 
     name = "Anti Tit For Tat"
+    short_name = "ATFT"
     classifier = {
         "memory_depth": 1,  # Four-Vector = (1.,0.,1.,0.)
         "stochastic": False,
@@ -980,6 +981,7 @@ class SoftTifForTat(Player):
 
     # These are various properties for the strategy
     name = "Soft Tit For Tat"
+    short_name = "STFT"
     classifier = {
         "memory_depth": 1,  # Four-Vector = (1.,0.,1.,0.)
         "stochastic": False,
@@ -1007,6 +1009,7 @@ class ToughTifForTat(Player):
 
     # These are various properties for the strategy
     name = "Tough Tit For Tat"
+    short_name = "TTFT"
     classifier = {
         "memory_depth": 1,  # Four-Vector = (1.,0.,1.,0.)
         "stochastic": False,
@@ -1032,6 +1035,7 @@ class SoftTitFor2Tats(Player):
     """
 
     name = "Soft Tit For 2 Tats"
+    short_name = "STF2T"
     classifier = {
         "memory_depth": 2,  # Long memory, memory-2
         "stochastic": False,

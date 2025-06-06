@@ -81,6 +81,7 @@ class Player(object, metaclass=PostInitCaller):
     """
 
     name = "Player"
+    short_name = "Player"
     classifier = {}  # type: Dict[str, Any]
     _reclassifiers = []
 

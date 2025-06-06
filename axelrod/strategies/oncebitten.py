@@ -140,6 +140,7 @@ class SoftFoolMeOnce(Player):
     """
 
     name = "Soft Fool Me Once"
+    short_name = "SFMO"
     classifier = {
         "memory_depth": float("inf"),  # Long memory
         "stochastic": False,
@@ -170,6 +171,7 @@ class ToughFoolMeOnce(Player):
     """
 
     name = "Tough Fool Me Once"
+    short_name = "TFMO"
     classifier = {
         "memory_depth": float("inf"),  # Long memory
         "stochastic": False,

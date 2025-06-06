@@ -16,6 +16,7 @@ class Cooperator(Player):
     """
 
     name = "Cooperator"
+    short_name = "Coop"
     classifier = {
         "memory_depth": 0,
         "stochastic": False,
