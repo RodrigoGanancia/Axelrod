@@ -385,6 +385,7 @@ class Tournament(object):
             final_scores = metrics["final_scores"]
             for m, player_index in enumerate(index_pair):
                 others = [i for i in index_pair if i != player_index]
+                opp1, opp2 = others[0], others[1]
                 row = [
                     self.num_interactions, # interaction index
                     player_index, # player index
@@ -707,10 +708,6 @@ class ThreePlayerTournament(Tournament):
                         "Win",
                         "Initial cooperation",
                         "Cooperation count",
-                        #"CC count",
-                        #"CD count",
-                        #"DC count",
-                        #"DD count",
                         "CCC count",
                         "CCD count",
                         "CDC count",
@@ -823,6 +820,8 @@ class ThreePlayerTournament(Tournament):
             
             for idx, player_index in enumerate(index_pair):
                 others = [i for i in index_pair if i != player_index]
+                opp1, opp2 = others[0], others[1]
+                #print(f"-- Writing CSV row for player {player_index}, opponents = ({opp1}, {opp2})")
                 row = [
                     self.num_interactions,
                     player_index, # player index

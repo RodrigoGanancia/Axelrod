@@ -1241,6 +1241,8 @@ class ThreeResultSet(ResultSet):
         
         #print("Wins: ", self.wins)
         
+        #self.payoff_matrix = self._build_summary_matrix(self.payoffs)
+        
         
     def summarise(self):
         P = self.num_players
@@ -1362,6 +1364,33 @@ class ThreeResultSet(ResultSet):
         return summary
             
     
+    # def _build_summary_matrix(self, attribute, func=np.mean):
+    #     P = self.num_players
+    #     R = self.repetitions
+    #     payoff_matrix_2d = [[0.0] * P for _ in range(P)]
+
+    #     for i in range(P):
+    #         for j in range(P):
+    #             if i == j:
+    #                 payoff_matrix_2d[i][j] = 0.0
+    #                 continue
+
+    #             total_score = 0.0
+    #             count: int = 0
+
+    #             for k in range(P):
+    #                 if k == i or k == j:
+    #                     continue
+    #                 for r in range(R):
+    #                     total_score += self.payoffs[i][j][k][r]
+    #                     count += 1
+
+    #             if count > 0:
+    #                 payoff_matrix_2d[i][j] = total_score / count
+    #             else:
+    #                 payoff_matrix_2d[i][j] = 0.0
+
+    #     return payoff_matrix_2d
     
     
     def _reshape_four_dim_list(

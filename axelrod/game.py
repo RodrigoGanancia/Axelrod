@@ -100,7 +100,7 @@ class Game(AsymmetricGame):
     """
 
     def __init__(
-        self, r: Score = 3, s: Score = 0, t: Score = 5, p: Score = 1
+        self, r: Score = 4, s: Score = 0, t: Score = 4, p: Score = 1
     ) -> None:
         """Create a new game object.
 
@@ -144,7 +144,7 @@ class ThreePlayerGame:
     def __init__(self, payoff_map):
         # payoff_map: Dict[Tuple[Action,Action,Action], Tuple[float,float,float]]
         self.payoff_map = payoff_map
-        #print(f"Payoff map: {self.payoff_map}")
+        print(f"Payoff map: {self.payoff_map}")
 
     def score(self, triple):
         """
@@ -159,9 +159,8 @@ class ThreePlayerGame:
     def __repr__(self):
         return f"ThreePlayerGame({len(self.payoff_map)} entries)"
 
-# -------------------------------------------------------------------
-# A built-in “default” 3-player PD payoff map for quick experiments:
 
+# default payoff based on pairwise sum of scores
 def make_pairwise_sum_payoff_map(game, normalize=False):
     payoff_map = {}
     for a1 in (C,D):
@@ -177,10 +176,8 @@ def make_pairwise_sum_payoff_map(game, normalize=False):
           if normalize:
             t1/=2; t2/=2; t3/=2
           payoff_map[(a1,a2,a3)] = (t1,t2,t3)
+    #print(f"Payoff map created: {payoff_map}")
     return payoff_map
 
-#: a handy default instance you can import directly
 DefaultThreePlayerGame = ThreePlayerGame(make_pairwise_sum_payoff_map(Game(), normalize=True))
-# -------------------------------------------------------------------
-
 DefaultGame = Game()

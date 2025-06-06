@@ -264,12 +264,18 @@ class ThreeMatch(Match):
                          match_attributes=match_attributes, seed=seed, prob_end=prob_end)
         self.game3 = game or game  # must be a ThreePlayerGame
 
+    # overridden method
     def play(self):
-        """Override play to use 3-player simultaneous_play."""
+        
         self.result = []
         for p in self.players:
             p.reset()
             p.set_match_attributes(length=self.turns, game=self.game3, noise=self.noise)
+        #print(f"ThreeMatch: players={self.players}, turns={self.turns}, prob_end={self.prob_end}, noise={self.noise}")
+        if self.prob_end and self.prob_end > 0:
+            r = self._random.random()
+            self.turns = min(sample_length(self.prob_end, r), self.turns)
+            #print(f"ThreeMatch: turns={self.turns}, prob_end={self.prob_end}, random={r}")
         for _ in range(self.turns):
             # each player picks an action given the *other two* as opponents
             acts = []
@@ -278,14 +284,25 @@ class ThreeMatch(Match):
                 # you must adapt your 3 strategies to accept `strategy(self, opponents: List[Player])`
                 if hasattr(player, "strategy_multi"):
                     # call the 3-player API
-                    acts.append(player.strategy_multi(others))
+                    #acts.append(player.strategy_multi(others))
+                    intended = player.strategy_multi(others)
+                    # if the player is stochastic, we flip the action with noise
+                    noisy = self._random.random_flip(intended, self.noise) if self.noise > 0 else intended
+                    acts.append(noisy)
                 else:
                     # fallback to 2-player API on the first opponent
-                    acts.append(player.strategy(others[0]))
+                    #acts.append(player.strategy(others[0]))
+                    intended = player.strategy(others[0])
+                    noisy_move = self._random.random_flip(intended, self.noise)
+                    acts.append(noisy_move)
             # apply noise if wanted
             # update each history: we pack the two opponents’ last moves as coplays
             for i, player in enumerate(self.players):
                 coplays = tuple(acts[j] for j in range(3) if j != i)
+                # noise
+                if self.noise > 0 and Classifiers["stochastic"](player):
+                    acts[i] = self._random.random_flip(acts[i], self.noise)
+                
                 player.update_history(acts[i], coplays)
             self.result.append(tuple(acts))
         return self.result
