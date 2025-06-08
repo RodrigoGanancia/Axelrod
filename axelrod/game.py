@@ -138,8 +138,9 @@ class Game(AsymmetricGame):
 
 class ThreePlayerGame:
     """
-    A simple 3-player extension of the standard PD payoff.
-    Expects a dictionary mapping (action1,action2,action3) → (score1,score2,score3).
+    3p extension of the standard PD payoff.
+    Expects a dictionary mapping (action1,action2,action3) 
+    to (score1,score2,score3) (e.g. {(C,C,C): (4,4,4), ...}).       
     """
     def __init__(self, payoff_map):
         # payoff_map: Dict[Tuple[Action,Action,Action], Tuple[float,float,float]]

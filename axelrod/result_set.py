@@ -579,110 +579,6 @@ class ResultSet:
         """
         Returns a tuple of dask tasks
         """
-        if "Opponent1 index" in df.columns:
-            # 3p
-            # mean per rep per triple (Turns, Score per turn, Score difference per turn)
-            groups = ["Repetition", "Player index", "Opponent1 index", "Opponent2 index"]
-            columns = ["Turns", "Score per turn", "Score difference per turn"]
-            mean_per_reps_player_opponent_task = df.groupby(groups)[columns].mean()
-            
-            # sum per player–pair of opponents (total scores & turns)
-            groups = ["Player index", "Opponent1 index", "Opponent2 index"]
-            columns = [
-                "Cooperation count",
-                "CC count",
-                "CD count",
-                "DC count",
-                "DD count",
-                "CC to C count",
-                "CC to D count",
-                "CD to C count",
-                "CD to D count",
-                "DC to C count",
-                "DC to D count",
-                "DD to C count",
-                "DD to D count",
-                "Good partner",
-            ]
-            sum_per_player_opponent = df.groupby(groups)[columns].sum()
-            
-            ignore_self_interactions_task = (
-                (df["Player index"] != df["Opponent1 index"])
-                & (df["Player index"] != df["Opponent2 index"])
-            )
-            adf = df[ignore_self_interactions_task]
-            
-            # sum per player–repetition (total Score, total Wins if you define Win)
-            sum_per_player_repetition = df.groupby([
-                'Player index', 'Repetition'
-            ])[[
-                'Score'
-            ]].sum()
-            # 4. Normalised average score per turn per rep
-            normalised_scores = df.groupby([
-                'Player index', 'Repetition'
-            ])['Score per turn'].mean()
-            # 5. Initial cooperation count (if you record it)
-            initial_cooperation = df.groupby('Player index')['Initial cooperation'].sum()
-            # 6. Total interactions per player
-            interactions_count = df.groupby('Player index')['Player index'].count()
-            
-            
-            
-            groups = ["Repetition", "Player index", "Opponent index"]
-            columns = ["Turns", "Score per turn", "Score difference per turn"]
-            
-            mean_per_reps_player_opponent_task = df.groupby(groups)[columns].mean()
-            groups = ["Player index", "Opponent index"]
-            columns = [
-                "Cooperation count",
-                "CC count",
-                "CD count",
-                "DC count",
-                "DD count",
-                "CC to C count",
-                "CC to D count",
-                "CD to C count",
-                "CD to D count",
-                "DC to C count",
-                "DC to D count",
-                "DD to C count",
-                "DD to D count",
-                "Good partner",
-            ]
-            sum_per_player_opponent_task = df.groupby(groups)[columns].sum()
-
-            ignore_self_interactions_task = (
-                df["Player index"] != df["Opponent index"]
-            )
-            adf = df[ignore_self_interactions_task]
-
-            groups = ["Player index", "Repetition"]
-            columns = ["Win", "Score"]
-            sum_per_player_repetition_task = adf.groupby(groups)[columns].sum()
-
-            groups = ["Player index", "Repetition"]
-            column = "Score per turn"
-            normalised_scores_task = adf.groupby(groups)[column].mean()
-
-            groups = ["Player index"]
-            column = "Initial cooperation"
-            initial_cooperation_count_task = adf.groupby(groups)[column].sum()
-            interactions_count_task = adf.groupby("Player index")[
-                "Player index"
-            ].count()
-            # TODO -> IMPLEMENT REST
-            return (
-                mean_per_reps_player_opponent_task,
-                None,  # sum_per_player_opponent_task not implemented for 3p
-                None,  # sum_per_player_repetition_task not implemented for 3p
-                None,  # normalised_scores_task not implemented for 3p
-                None,  # initial_cooperation_count_task not implemented for 3p
-                None,  # interactions_count_task not implemented for 3p
-            )
-            
-        #else:
-        #
         groups = ["Repetition", "Player index", "Opponent index"]
         columns = ["Turns", "Score per turn", "Score difference per turn"]
         
@@ -909,12 +805,12 @@ class ThreeResultSet(ResultSet):
     def _build_tasks(self, df):
         print("DEBUG columns available: ", df.columns)
         print("amount of columns: ", len(df.columns))
-        # 1. Mean per repetition × player × opp1 × opp2
+        # mean per rep (player, opp1, opp2)
         groups = ['Repetition', 'Player index', 'Opponent1 index', 'Opponent2 index']
         columns = ['Turns', 'Score per turn', 'Score difference per turn']
         mean_per_reps = df.groupby(groups)[columns].mean()
 
-        # 2. Sum per player × (opp1, opp2)
+        # sum per player, (opp1, opp2)
         groups = ['Player index', 'Opponent1 index', 'Opponent2 index']
         sum_cols = ['Cooperation count',
                     "CCC count", "CCD count", "CDC count", "CDD count",
@@ -927,11 +823,6 @@ class ThreeResultSet(ResultSet):
                     "DCD to C count", "DCD to D count",
                     "DDC to C count", "DDC to D count",
                     "DDD to C count", "DDD to D count",
-                    #'CC count', 'CD count', 'DC count', 'DD count',
-                    #'CC to C count', 'CC to D count',
-                    #'CD to C count', 'CD to D count',
-                    #'DC to C count', 'DC to D count',
-                    #'DD to C count', 'DD to D count',
                     'Good partner']
         sum_per_player_opponent = df.groupby(groups)[sum_cols].sum()
         
@@ -941,19 +832,19 @@ class ThreeResultSet(ResultSet):
         )
         adf = df[ignore_self_interactions]
         
-        # 3. Sum per player × repetition
+        # sum per player per rep
         groups = ['Player index', 'Repetition']
         columns = ['Win', 'Score']
         sum_per_player_repetition = adf.groupby(groups)[columns].sum()
 
-        # 4. Normalised score per turn per player × repetition
+        # normalised score per turn per player per rep
         groups = ['Player index', 'Repetition']
         normalised_scores = df.groupby(groups)['Score per turn'].mean()
 
-        # 5. Initial cooperation count per player
+        # initial coop count per player
         initial_cooperation = df.groupby('Player index')['Initial cooperation'].sum()
 
-        # 6. Interaction counts per player (for normalization)
+        # interaction counts per player
         interactions_count = df.groupby('Player index')['Player index'].count()
         return (
             mean_per_reps,
@@ -975,7 +866,7 @@ class ThreeResultSet(ResultSet):
         interaction_count_series,
     ):
         P, R = self.num_players, self.repetitions
-        # --- Payoff per turn: 4D list [player][opp1][opp2][repetition]
+        # payoff per turn ([player][opp1][opp2][repetition])
         self.payoffs = self._reshape_four_dim_list(
             mean_df['Score per turn'],
             dims=(range(P), range(P), range(P), range(R)),
@@ -983,7 +874,6 @@ class ThreeResultSet(ResultSet):
             key_order=[3,0,1,2],
         )
         
-        # --- Payoff stddevs across repetitions
         self.payoff_stddevs = self._reshape_four_dim_list(
             mean_df['Score per turn'],
             dims=(range(P), range(P), range(P), None),
@@ -992,15 +882,14 @@ class ThreeResultSet(ResultSet):
             func=np.std
         )
         
-        # --- Score differences: (s1-s2, s1-s3, s2-s3) stored per rep
-        # We compute pairwise diffs on the 4D payoffs
+        # score difs: (s1-s2, s1-s3, s2-s3) stored per rep
         self.score_diffs = [[[ [
             self.payoffs[i][j][k][r] - self.payoffs[j][i][k][r] if i<j else
             self.payoffs[i][j][k][r] - self.payoffs[k][j][i][r]
             for r in range(R)
         ] for k in range(P)] for j in range(P)] for i in range(P)]
 
-        # --- Match lengths per turn: reuse 'Turns'
+        # match lengths per turn (reuse turns)
         self.match_lengths = self._reshape_four_dim_list(
             mean_df['Turns'],
             dims=(range(P), range(P), range(P), range(R)),
@@ -1008,38 +897,49 @@ class ThreeResultSet(ResultSet):
             key_order=[3,0,1,2] 
         )
         
-        # --- Total scores per player × rep
-        # sum_rep_df: MultiIndex [(Player,Repetition)] → Score
+        # total scores per player per rep
+        # sum_rep_df: MultiIndex [(Player,Repetition)] to Score
         self.scores = [
             [ sum_rep_df.loc[(i, r)]['Score'] if (i, r) in sum_rep_df.index else 0
               for r in range(R)
             ] for i in range(P)
         ]
         #print("Scores: ", self.scores)
-        self.normalised_scores = self.scores
-        #print(f"Normalised scores: {self.normalised_scores}")
+        #self.normalised_scores = self.scores
+        turns_per_rep = []
+        for i in range(P):
+            rep_totals = [0]*R
+            for j in range(P):
+                if j == i:
+                    continue
+                for k in range(P):
+                    if k == i or k == j:
+                        continue
+                    # list with length R
+                    rep_list = self.match_lengths[i][j][k]
+                    # accumulate
+                    for r, t in enumerate(rep_list):
+                        rep_totals[r] += t
+            turns_per_rep.append(rep_totals)
+            
+        self.normalised_scores = [
+            [ sc/tn if tn else 0
+            for sc, tn in zip(self.scores[i], turns_per_rep[i]) ]
+            for i in range(P)
+        ]
 
-        # --- Normalised scores per rep
-        # self.normalised_scores = [
-        #     [ norm_scores_series.loc[(i, r)] if (i, r) in norm_scores_series.index else 0
-        #       for r in range(R)
-        #     ] for i in range(P)
-        # ]
-
-        # --- Cooperation and partner metrics per player × opp1 × opp2
-        # sum_opp_df: MultiIndex [(Player,Opp1,Opp2)] → multiple cols
         def get_sum(i,j,k, col):
             key = (i, j, k)
             return sum_opp_df.loc[key][col] if key in sum_opp_df.index else 0
 
-        # Cooperation count
+        # coop count
         self.cooperation = [ 
             [ [ get_sum(i,j,k,'Cooperation count')
                 for k in range(P)] 
                 for j in range(P)] 
                 for i in range(P)]
 
-        # State distributions
+        # state dists
         # Counter({(C,C): get_sum(i,j,k,'CC count'),
             #          (C,D): get_sum(i,j,k,'CD count'),
             #          (D,C): get_sum(i,j,k,'DC count'),
@@ -1055,7 +955,7 @@ class ThreeResultSet(ResultSet):
                     (D,D,D): get_sum(i,j,k,'DDD count')})
             for k in range(P)] for j in range(P)] for i in range(P)]
 
-        # Normalised state distributions
+        # normalised state distributions
         self.normalised_state_distribution = []
         for i in range(P):
             row_i = []
@@ -1065,7 +965,7 @@ class ThreeResultSet(ResultSet):
                     sd = self.state_distribution[i][j][k]  # <-- Counter
                     total = sum(sd.values())
                     if total > 0:
-                        # build normalized Counter(state → probability)
+                        # build normalized Counter(state - probability)
                         norm = Counter({ state: count / total for state, count in sd.items() })
                     else:
                         norm = Counter()
@@ -1073,9 +973,9 @@ class ThreeResultSet(ResultSet):
                 row_i.append(row_j)
             self.normalised_state_distribution.append(row_i)
 
-        # State→action distributions
-        # Build a mapping for each player i, each opponent pair (j,k),
-        # of how often each prior state led to cooperation or defection.
+        # state - action dists
+        # for each player and opp pair understand how often he transitions
+        # from each state to C or D
         self.state_to_action_distribution = []
         for i in range(P):
             player_list = []
@@ -1083,7 +983,7 @@ class ThreeResultSet(ResultSet):
                 opp_list = []
                 for k in range(P):
                     counter = Counter()
-                    # For each possible state (C,C,C), ..., look up counts
+                    # for each state look up counts
                     for (triple, labels) in [
                         ((C,C,C), ("CCC to C count", "CCC to D count")),
                         ((C,C,D), ("CCD to C count", "CCD to D count")),
@@ -1094,9 +994,8 @@ class ThreeResultSet(ResultSet):
                         ((D,D,C), ("DDC to C count", "DDC to D count")),
                         ((D,D,D), ("DDD to C count", "DDD to D count")),
                     ]:
-                        # Count of transitions from this state to C
+                        # transitions from cur state to C or D
                         c_count = get_sum(i, j, k, labels[0])
-                        # Count of transitions from this state to D
                         d_count = get_sum(i, j, k, labels[1])
                         if c_count > 0:
                             counter[(triple, C)] = c_count
@@ -1106,8 +1005,8 @@ class ThreeResultSet(ResultSet):
                 player_list.append(opp_list)
             self.state_to_action_distribution.append(player_list)
 
-        # Normalised state→action distributions
-        # Convert raw counts into probabilities per state.
+        # normalised state - action distributions
+        # raw counts -> probs per state
         self.normalised_state_to_action_distribution = []
         for i in range(P):
             player_norm = []
@@ -1124,23 +1023,22 @@ class ThreeResultSet(ResultSet):
                 player_norm.append(opp_norm)
             self.normalised_state_to_action_distribution.append(player_norm)
 
-        # Initial cooperation & rates
+        # initial coop and rates
         self.initial_cooperation_count = [ init_coop_series.get(i,0)
                                            for i in range(P) ]
         self.initial_cooperation_rate = [ init_coop_series.get(i,0) / interaction_count_series.get(i,1)
                                           if interaction_count_series.get(i,0)>0 else 0
                                           for i in range(P) ]
 
-        # Good partner matrix & rating
+        # good partner matrix & rating (useless?)
         self.good_partner_matrix = [ [ get_sum(i,j,k,'Good partner')
                                        for k in range(P)] for j in range(P)]
         self.good_partner_rating = [ sum(self.good_partner_matrix[i]) /
                                      max(1, interaction_count_series.get(i,0))
                                      for i in range(P) ]
 
-        # Vengeful cooperation
-        # Vengeful cooperation: D_ij = 2*(p_CC - 0.5),
-        # where p_CC is the probability of (C,C) from the normalized state distribution
+        # vengeful coop: D_ij = 2*(p_CC - 0.5),
+        # where p_CC: prob. of (C,C) from the normalized state distribution
         self.vengeful_cooperation = []
         for i in range(P):
             row_i = []
@@ -1166,11 +1064,11 @@ class ThreeResultSet(ResultSet):
                     row_j.append(rate)
                 row_i.append(row_j)
             self.normalised_cooperation.append(row_i)
-        # Collapse into a 2D adjacency matrix
+        # collapse into 2D adj. mat
         coop_matrix = [[0]*P for _ in range(P)]
         for i in range(P):
             for j in range(P):
-                # average across all third players k ≠ i,j
+                # average across all third players k != i,j
                 total = 0
                 count = 0
                 for k in range(P):
@@ -1182,18 +1080,15 @@ class ThreeResultSet(ResultSet):
 
         self.normalised_cooperation = coop_matrix
 
-        # Eigen ratings (reuse parent methods)
+        # eigen ratings and coop rating reuse parent
         #self.eigenjesus_rating = super()._build_eigenjesus_rating()
         #self.eigenmoses_rating = super()._build_eigenmoses_rating()
-
-        # Cooperation rating
         # = super()._build_cooperating_rating()
 
-        # Ranking and names
+        # ranking and names
         self.ranking = super()._build_ranking()
         self.ranked_names = super()._build_ranked_names()
         
-        # TODO -> fix
         self.wins = [
         [
             sum_rep_df.loc[(i, r)]['Win']
@@ -1217,9 +1112,9 @@ class ThreeResultSet(ResultSet):
         
         cooperating_rating_3P = []
         for i in range(P):
-            # sum_i_coops = Σ_{j,k ≠ i} self.cooperation[i][j][k]
+            # sum_i_coops = sum_{j,k != i} self.cooperation[i][j][k]
             sum_i_coops = 0
-            # sum_i_turns = Σ_{j,k ≠ i} self.match_lengths_3D[i][j][k]
+            # sum_i_turns = sum_{j,k != i} self.match_lengths_3D[i][j][k]
             sum_i_turns = 0
 
             for j in range(P):
@@ -1246,7 +1141,6 @@ class ThreeResultSet(ResultSet):
         
     def summarise(self):
         P = self.num_players
-        R = self.repetitions
         
         self.player = namedtuple(
             "Player",
@@ -1263,18 +1157,16 @@ class ThreeResultSet(ResultSet):
              "DDC_to_C_rate","DDC_to_D_rate",
              "DDD_to_C_rate","DDD_to_D_rate",  
             ] 
-             #"CC_rate","CD_rate","DC_rate","DD_rate",
-             #"CC_to_C_rate","CD_to_C_rate","DC_to_C_rate","DD_to_C_rate"]
         )
         
-        # 1. Payoff ranking and median scores reuse parent logic
+        # payoff ranking and median scores reuse parent logic
         median_scores = list(map(np.nanmedian, self.normalised_scores))
         # wins should already be set
         median_wins   = list(map(np.nanmedian, self.wins))
         original_index = [index for index, _player in enumerate(self.players)]
         #print("Median wins: ", median_wins)
 
-        # 2. Build state_prob for 3p by summing over all pairs (j,k)
+        # build state_prob for 3p summing over all pairs
         states = [
             (C, C, C),
             (C, C, D),
@@ -1309,7 +1201,8 @@ class ThreeResultSet(ResultSet):
                 # if no interactions, we just give 0 for each triple
                 state_prob.append([0.0] * 8)
 
-        # 3. Build state_to_C_prob similarly by averaging P(C|state) across pairs
+        # build state_to_C_prob by averaging likelihood of C given state
+        # across pairs (and state_to_D_prob)
         state_to_C_prob = []
         state_to_D_prob = []
         for i in range(P):
@@ -1340,11 +1233,12 @@ class ThreeResultSet(ResultSet):
             state_to_C_prob.append(probs_C_lst)
             state_to_D_prob.append(probs_D_lst)
             
-        # 4. Build summary rows
+        # summary rows
         summary = []
         for player in range(P):
             row = [
-                # Rank, Name, Median_score, Cooperation_rating, Wins, Initial_C_rate, Original_index
+                # rank, name, medianscore, cooprating, wins, initial c rate, 
+                # originalindex (useless?)
                 self.ranking.index(player),
                 str(self.players[player]),
                 median_scores[player],
@@ -1353,7 +1247,7 @@ class ThreeResultSet(ResultSet):
                 self.initial_cooperation_rate[player],
                 original_index[player],
             ]
-            
+            # extend with state probs
             row.extend(state_prob[player])  # state probs
             # CCC to C, CCC to D, ...
             for idx_state in range(len(states)):

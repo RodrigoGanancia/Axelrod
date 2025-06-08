@@ -53,7 +53,11 @@ players = (SoftTifForTat(), ToughTifForTat(), Defector(), ToughFoolMeOnce(), Coo
 
 TURNS_PER_MATCH = 30
 MILLIS_PER_TURN = 500
-SCREEN_WIDTH  = 3800
+pygame.init()
+info = pygame.display.Info()
+SCREEN_WIDTH  = info.current_w
+SCREEN_HEIGHT = info.current_h
+SCREEN_WIDTH  = 2000
 SCREEN_HEIGHT = 2000
 BG_COLOR     = (220, 220, 220)   # light gray background
 COOP_COLOR   = ( 50, 150, 250)   # blue = “Cooperate”

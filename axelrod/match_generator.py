@@ -94,6 +94,7 @@ class MatchGenerator(object):
             if self.group_size == 2:
                 edges = complete_graph(self.players)
             else:
+                # 3p
                 edges = complete_3hypergraph(self.players)
         else:
             edges = self.edges
@@ -162,7 +163,8 @@ def graph_is_connected(edges, players):
 
 
 def complete_3hypergraph(players):
-    """Yield all unordered triples (i,j,k) with i<j<k"""
+    """all unordered triples (i,j,k) with i<j<k"""
+    # (for 3p matches)
     n = len(players)
     for i,j,k in combinations(range(n), 3):
         yield (i,j,k)

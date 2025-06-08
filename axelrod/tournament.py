@@ -644,7 +644,7 @@ class Tournament(object):
 class ThreePlayerTournament(Tournament):
     """
     A tournament class for three-player tournaments.
-    Inherits from Tournament and overrides relevant methods and attributes.
+    Inherits from Tournament, overrides relevant methods and attributes.
     """
 
     def __init__(

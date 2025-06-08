@@ -258,7 +258,6 @@ class ThreeMatch(Match):
                  noise=0, match_attributes=None, seed=None):
         if len(players) != 3:
             raise ValueError("ThreeMatch requires exactly 3 players.")
-        # We ignore deterministic_cache and prob_end for now:
         super().__init__(players=players, turns=turns,
                          game=None, noise=noise,
                          match_attributes=match_attributes, seed=seed, prob_end=prob_end)
@@ -281,7 +280,6 @@ class ThreeMatch(Match):
             acts = []
             for i, player in enumerate(self.players):
                 others = [self.players[j] for j in range(3) if j != i]
-                # you must adapt your 3 strategies to accept `strategy(self, opponents: List[Player])`
                 if hasattr(player, "strategy_multi"):
                     # call the 3-player API
                     #acts.append(player.strategy_multi(others))
@@ -295,8 +293,7 @@ class ThreeMatch(Match):
                     intended = player.strategy(others[0])
                     noisy_move = self._random.random_flip(intended, self.noise)
                     acts.append(noisy_move)
-            # apply noise if wanted
-            # update each history: we pack the two opponents’ last moves as coplays
+            # update each history
             for i, player in enumerate(self.players):
                 coplays = tuple(acts[j] for j in range(3) if j != i)
                 # noise

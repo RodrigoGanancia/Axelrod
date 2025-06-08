@@ -319,8 +319,7 @@ def compute_final_score_per_turn_3p(interactions, game=None):
     return final_score_per_turn
     
 def compute_cooperations_3p(interactions):
-    """Returns the count of cooperations by each player for a set of
-    interactions"""
+    # count of cooperations by each player for a set of interactions
     if len(interactions) == 0:
         return None
 
@@ -350,7 +349,7 @@ def compute_normalised_state_distribution_3p(interactions):
     
     
 def compute_winner_index_3p(interactions, game=None):
-    """Returns the index of the winner of the Match"""
+    # index of the winner of the match
     scores = compute_final_score_3p(interactions, game)
 
     if scores is not None:
@@ -360,29 +359,8 @@ def compute_winner_index_3p(interactions, game=None):
     return None
 
 def compute_state_to_action_distribution_3p(interactions):
-    """
-    Returns a list (for each player) of counts of each state to action pair
-    for a set of interactions. A state to action pair is of the form:
-
-    ((C, D, C), C)
-
-    Implying that from a state of (C, D, C) (the first player having played C,
-    the second playing D and the third playing C) the player in question then
-    played C.
-
-    Parameters
-    ----------
-    interactions : list of tuples
-        A list containing the interactions of the match as shown at the top of
-        this file.
-
-    Returns
-    ----------
-    state_to_C_distributions : List of Counter Object
-        List of Counter objects where the keys are the states and actions and
-        the values the counts. The first/second/third Counter corresponds to
-        the first/second/third player.
-    """
+    # list for each player that counts each state to action pair for 
+    # a given set of interactions
     if not interactions:
         return None
 
